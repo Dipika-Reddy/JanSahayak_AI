@@ -8,52 +8,33 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { SUPPORTED_LANGUAGES } from "@/lib/translations";
-// --- Dynamic AI Translation Cache ---
-const translationCache = new Map<string, string>();
-
-function useAITranslate(text: string, targetLang: string) {
-  const [translated, setTranslated] = useState(text);
-
-  useEffect(() => {
-    if (targetLang === 'en-IN' || targetLang === 'en') {
-      setTranslated(text);
-      return;
-    }
-
-    const cacheKey = `${text}_${targetLang}`;
-    if (translationCache.has(cacheKey)) {
-      setTranslated(translationCache.get(cacheKey)!);
-      return;
-    }
-
-    // Debounce/avoid spamming slightly
-    const timeout = setTimeout(async () => {
-      try {
-        const res = await fetch('/api/translate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text, targetLang })
-        });
-        const data = await res.json();
-        if (data.translatedText) {
-          translationCache.set(cacheKey, data.translatedText);
-          setTranslated(data.translatedText);
-        }
-      } catch (err) {
-        console.error("Translation error", err);
-      }
-    }, 100);
-
-    return () => clearTimeout(timeout);
-  }, [text, targetLang]);
-
-  return translated;
-}
-
-// A simple wrapper component for translating UI text
+// --- Static Dictionary Translation ---
 const T = ({ children, lang }: { children: string, lang: string }) => {
-  const t = useAITranslate(children, lang);
-  return <>{t}</>;
+  const t = TRANSLATIONS[lang] || TRANSLATIONS['en-IN'];
+  
+  const stringMap: Record<string, string> = {
+    'Home': t.home,
+    'Discover Government Schemes tailored for you.': t.discoverTitle,
+    'Tell us about yourself (age, occupation, state, gender, income) and we will find the best schemes for you.': t.discoverDesc,
+    'Eligible Schemes': t.eligibleSchemes,
+    'No matching schemes found for this profile.': t.noSchemes,
+    'Why you qualify': t.whyQualify,
+    'Benefits': t.benefits,
+    'Required Documents': t.requiredDocs,
+    'Apply Online': t.applyOnline,
+    'Find Nearby Center': t.findCenter,
+    'Listening (will auto-submit when you stop speaking)...': t.listeningAuto,
+    'Listening...': t.listening,
+    'Tap to speak, or type below': t.tapToSpeak,
+    'Understanding your profile...': t.processing,
+    'Finding eligible schemes...': t.finding,
+    'Eligible': t.eligible,
+    'Not Eligible': t.notEligible,
+    'Need Info': t.needMoreInfo,
+    'Likely Eligible': t.likelyEligible
+  };
+
+  return <>{stringMap[children] || children}</>;
 };
 
 function VoiceInterfaceContent() {
@@ -279,7 +260,8 @@ function VoiceInterfaceContent() {
     }
     
     window.speechSynthesis.cancel();
-    const text = `${scheme.name}. ${scheme.description}. Benefits: ${scheme.benefits}. Eligibility: ${scheme.matchDetails.reason}. Required Documents: ${scheme.required_documents?.join(', ')}.`;
+    const t = TRANSLATIONS[langQuery] || TRANSLATIONS['en-IN'];
+    const text = `${scheme.name}. ${scheme.description}. ${t.benefits}: ${scheme.benefits}. ${t.whyQualify}: ${scheme.matchDetails.reason}. ${t.requiredDocs}: ${scheme.required_documents?.join(', ')}.`;
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = langQuery;
     utterance.onend = () => {
