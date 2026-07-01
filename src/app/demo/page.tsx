@@ -305,6 +305,12 @@ function VoiceInterfaceContent() {
     playTTS(results[currentReadIndex + 1], currentReadIndex + 1);
   };
 
+  const getTranslatedLink = (url: string) => {
+    if (langQuery === 'en' || langQuery === 'en-IN') return url;
+    const langCode = langQuery.split('-')[0]; // convert en-IN to en, hi-IN to hi
+    return `https://translate.google.com/translate?sl=en&tl=${langCode}&u=${encodeURIComponent(url)}`;
+  };
+
   const prevScheme = () => {
     if (!results || currentReadIndex <= 0) return;
     playTTS(results[currentReadIndex - 1], currentReadIndex - 1);
@@ -468,7 +474,7 @@ function VoiceInterfaceContent() {
                     </div>
                   </CardContent>
                   <CardFooter className="bg-zinc-50 dark:bg-zinc-900/50 flex flex-col sm:flex-row gap-3 pt-4">
-                    <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700" onClick={() => window.open(scheme.application_link, '_blank')}>
+                    <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700" onClick={() => window.open(getTranslatedLink(scheme.application_link), '_blank')}>
                       <T lang={langQuery}>Apply Online</T>
                     </Button>
                     <Button variant="outline" className="w-full sm:w-auto gap-2" onClick={() => window.open('https://www.google.com/maps/search/MeeSeva+or+CSC+center+near+me', '_blank')}>
