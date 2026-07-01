@@ -6,8 +6,11 @@ import { mockSchemes } from '@/lib/mock-schemes';
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 export async function POST(req: Request) {
+  let lang = 'en-IN';
   try {
-    const { profile, lang = 'en-IN' } = await req.json();
+    const body = await req.json();
+    lang = body.lang || 'en-IN';
+    const profile = body.profile;
 
     if (!profile) {
       return NextResponse.json({ error: 'Profile is required' }, { status: 400 });
