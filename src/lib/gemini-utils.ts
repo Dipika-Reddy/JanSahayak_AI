@@ -11,8 +11,7 @@ export async function generateContentWithRetry(prompt: string, config: any = {},
   
   // Try preferred model, fallback to 1.5-flash if all retries fail
   const modelsToTry = [
-    config.model || "gemini-2.5-flash",
-    "gemini-1.5-flash"
+    config.model || "gemini-2.5-flash"
   ];
 
   for (const modelName of modelsToTry) {
