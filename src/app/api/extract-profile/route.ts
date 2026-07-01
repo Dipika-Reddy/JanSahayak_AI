@@ -11,13 +11,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Transcript is required' }, { status: 400 });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-2.5-flash",
+      generationConfig: { responseMimeType: "application/json" }
+    });
 
     const prompt = `
     You are an AI assistant that extracts user profiles from text. 
     Extract the following fields if present: age, gender, occupation, state, district, disability, category, farmer status, income, marital status, pregnant.
     Return ONLY a JSON object with the extracted keys and values. If a field is not mentioned, omit it from the JSON.
-    Do not wrap the JSON in Markdown formatting like \`\`\`json. Just return the raw JSON object.
 
     Text:
     "${transcript}"
@@ -27,14 +29,22 @@ export async function POST(req: Request) {
     const response = await result.response;
     let text = response.text();
     
-    // Clean up potential markdown formatting from Gemini
+    // Fallback cleanup just in case
     text = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
-    const profile = text ? JSON.parse(text) : {};
+    let profile = {};
+    try {
+      profile = text ? JSON.parse(text) : {};
+    } catch (parseError) {
+      console.error('Failed to parse Gemini JSON output:', text);
+      return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 500 });
+    }
 
     return NextResponse.json({ profile });
   } catch (error) {
     console.error('Error in extract-profile API:', error);
-    return NextResponse.json({ error: 'Failed to extract profile' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Failed to extract profile: ' + (error instanceof Error ? error.message : String(error)) 
+    }, { status: 500 });
   }
 }

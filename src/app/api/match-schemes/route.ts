@@ -12,7 +12,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Profile is required' }, { status: 400 });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-2.5-flash",
+      generationConfig: { responseMimeType: "application/json" }
+    });
     
     const prompt = `
     You are an expert on Indian Government Welfare Schemes.
@@ -35,7 +38,6 @@ export async function POST(req: Request) {
     - "application_link": string
     - "matchDetails": object with "eligibility" (string: "Eligible" or "Potentially Eligible") and "reason" (string explaining exactly why they match based on their profile in the requested language).
     
-    Return ONLY valid JSON.
     Translate the "reason" field and any other text fields (like description and benefits) into the language code: ${lang}
     `;
 
@@ -43,29 +45,23 @@ export async function POST(req: Request) {
     const response = await result.response;
     let text = response.text();
     
-    // Clean up potential markdown formatting from Gemini
+    // Fallback cleanup
     text = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
     let matches = [];
-    if (text) {
-       const parsed = JSON.parse(text);
-       matches = parsed.matches || parsed;
-       if (!Array.isArray(matches) && typeof matches === 'object') {
-         matches = Object.values(matches).find(val => Array.isArray(val)) || [];
-       }
+    try {
+      const data = JSON.parse(text);
+      matches = data.matches || [];
+    } catch (parseError) {
+      console.error('Failed to parse Gemini JSON output in match-schemes:', text);
+      return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 500 });
     }
 
-    const populatedMatches = matches.map((match: any) => {
-      const scheme = mockSchemes.find(s => s.id === match.schemeId);
-      return {
-        ...scheme,
-        matchDetails: match
-      };
-    }).filter((s: any) => s.id);
-
-    return NextResponse.json({ matches: populatedMatches });
+    return NextResponse.json({ matches });
   } catch (error) {
     console.error('Error in match-schemes API:', error);
-    return NextResponse.json({ error: 'Failed to match schemes' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Failed to match schemes: ' + (error instanceof Error ? error.message : String(error)) 
+    }, { status: 500 });
   }
 }
