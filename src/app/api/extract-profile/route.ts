@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { generateContentWithRetry } from '@/lib/gemini-utils';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
@@ -11,11 +12,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Transcript is required' }, { status: 400 });
     }
 
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.5-flash",
-      generationConfig: { responseMimeType: "application/json" }
-    });
-
     const prompt = `
     You are an AI assistant that extracts user profiles from text. 
     Extract the following fields if present: age, gender, occupation, state, district, disability, category, farmer status, income, marital status, pregnant.
@@ -25,9 +21,10 @@ export async function POST(req: Request) {
     "${transcript}"
     `;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    let text = response.text();
+    let text = await generateContentWithRetry(prompt, {
+      model: "gemini-2.5-flash",
+      generationConfig: { responseMimeType: "application/json" }
+    });
     
     // Fallback cleanup just in case
     text = text.replace(/```json/g, '').replace(/```/g, '').trim();

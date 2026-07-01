@@ -38,8 +38,30 @@ export async function POST(req: Request) {
     });
 
     const lastMessage = formattedMessages[formattedMessages.length - 1].parts[0].text;
-    const result = await chat.sendMessage(lastMessage);
-    const responseText = result.response.text();
+    
+    let responseText = "";
+    let attempt = 0;
+    const maxRetries = 3;
+
+    while (attempt < maxRetries) {
+      try {
+        const result = await chat.sendMessage(lastMessage);
+        responseText = result.response.text();
+        break; // Success
+      } catch (error: any) {
+        attempt++;
+        const is503 = error?.message?.includes('503') || error?.status === 503;
+        const isRateLimit = error?.message?.includes('429') || error?.status === 429;
+        
+        console.warn(`[Gemini Chat API] Attempt ${attempt} failed:`, error.message);
+        
+        if (attempt >= maxRetries || (!is503 && !isRateLimit)) {
+          throw error;
+        }
+        const delay = Math.pow(2, attempt) * 1000;
+        await new Promise(res => setTimeout(res, delay));
+      }
+    }
 
     return NextResponse.json({ reply: responseText });
     

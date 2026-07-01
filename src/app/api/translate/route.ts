@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { generateContentWithRetry } from '@/lib/gemini-utils';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
@@ -11,17 +12,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Text and targetLang are required' }, { status: 400 });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" }); // Using lite for faster translations
-    
     const prompt = `Translate the following UI text into the language code: ${targetLang}. 
     Return ONLY the translated string, with no additional formatting, quotes, or markdown.
     
     Text to translate:
     ${text}`;
 
-    const result = await model.generateContent(prompt);
-    let translatedText = result.response.text().trim();
+    let translatedText = await generateContentWithRetry(prompt, {
+      model: "gemini-2.5-flash-lite", // Using lite for faster translations
+    });
     
+    translatedText = translatedText.trim();
     // Clean up any potential markdown or quotes
     translatedText = translatedText.replace(/^["'](.*)["']$/, '$1');
 

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { generateContentWithRetry } from '@/lib/gemini-utils';
 import { mockSchemes } from '@/lib/mock-schemes';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
@@ -12,11 +13,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Profile is required' }, { status: 400 });
     }
 
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.5-flash",
-      generationConfig: { responseMimeType: "application/json" }
-    });
-    
     const prompt = `
     You are an expert on Indian Government Welfare Schemes.
     Given the following user profile and a list of available schemes, determine which schemes the user is eligible for.
@@ -41,9 +37,10 @@ export async function POST(req: Request) {
     Translate the "reason" field and any other text fields (like description and benefits) into the language code: ${lang}
     `;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    let text = response.text();
+    let text = await generateContentWithRetry(prompt, {
+      model: "gemini-2.5-flash",
+      generationConfig: { responseMimeType: "application/json" }
+    });
     
     // Fallback cleanup
     text = text.replace(/```json/g, '').replace(/```/g, '').trim();
