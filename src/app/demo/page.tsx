@@ -138,12 +138,15 @@ function VoiceInterfaceContent() {
       
       setResults(matchData.matches);
       
+      const t = TRANSLATIONS[langQuery] || TRANSLATIONS['en-IN'];
+      const respText = `${t.foundSchemes1 || 'I found '}${matchData.matches.length}${t.foundSchemes2 || ' schemes for you. You can ask me to read them or ask follow-up questions.'}`;
+
       setMessages([
         { role: 'user', content: textToSubmit },
-        { role: 'assistant', content: `I found ${matchData.matches.length} schemes that you might be eligible for. You can ask me to read them, explain one in detail, or ask follow-up questions.` }
+        { role: 'assistant', content: respText }
       ]);
       
-      speakResponse(`I found ${matchData.matches.length} schemes for you. You can ask me to read them or ask follow-up questions.`);
+      speakResponse(respText);
 
     } catch (error) {
       console.error("Error:", error);

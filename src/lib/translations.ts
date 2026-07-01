@@ -32,6 +32,8 @@ export const TRANSLATIONS: Record<string, any> = {
     benefits: 'Benefits',
     applyOnline: 'Apply Online',
     findCenter: 'Find Nearby Center',
+    foundSchemes1: 'I found ',
+    foundSchemes2: ' schemes for you. You can ask me to read them or ask follow-up questions.',
     // Landing Page
     tryLiveDemo: 'Try Live Demo',
     heroTag: 'Bridging the Citizen-Benefit Gap',
@@ -85,6 +87,8 @@ export const TRANSLATIONS: Record<string, any> = {
     benefits: 'लाभ',
     applyOnline: 'ऑनलाइन आवेदन करें',
     findCenter: 'निकटतम केंद्र खोजें',
+    foundSchemes1: 'मुझे आपके लिए ',
+    foundSchemes2: ' योजनाएं मिली हैं। आप मुझे उन्हें पढ़ने या प्रश्न पूछने के लिए कह सकते हैं।',
     // Landing Page
     tryLiveDemo: 'लाइव डेमो आज़माएं',
     heroTag: 'नागरिक-लाभ के अंतर को पाटना',
@@ -136,6 +140,8 @@ export const TRANSLATIONS: Record<string, any> = {
     benefits: 'ప్రయోజనాలు',
     applyOnline: 'ఆన్‌లైన్‌లో దరఖాస్తు చేయండి',
     findCenter: 'సమీప కేంద్రాన్ని కనుగొనండి',
+    foundSchemes1: 'నేను మీ కోసం ',
+    foundSchemes2: ' పథకాలను కనుగొన్నాను. మీరు నన్ను వాటిని చదవమని లేదా ప్రశ్నలు అడగమని చెప్పవచ్చు.',
     // Landing Page
     tryLiveDemo: 'లైవ్ డెమోని ప్రయత్నించండి',
     heroTag: 'పౌరులు-ప్రయోజనాల అంతరాన్ని పూడ్చడం',
@@ -187,6 +193,8 @@ export const TRANSLATIONS: Record<string, any> = {
     benefits: 'பலன்கள்',
     applyOnline: 'ஆன்லைனில் விண்ணப்பிக்கவும்',
     findCenter: 'அருகிலுள்ள மையத்தைக் கண்டறியவும்',
+    foundSchemes1: 'நான் உங்களுக்காக ',
+    foundSchemes2: ' திட்டங்களை கண்டுபிடித்துள்ளேன். நீங்கள் என்னை அவற்றைப் படிக்கவோ அல்லது கேள்விகள் கேட்கவோ சொல்லலாம்.',
     // Landing Page
     tryLiveDemo: 'நேரலை டெமோவை முயற்சிக்கவும்',
     heroTag: 'குடிமக்கள்-பலன்கள் இடைவெளியைக் குறைத்தல்',
