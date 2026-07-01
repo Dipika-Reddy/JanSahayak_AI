@@ -503,6 +503,8 @@ function VoiceInterfaceContent() {
             )}
           </div>
         )}
+        {/* Explicit spacer to prevent footer overlap */}
+        <div className="h-64 w-full shrink-0"></div>
 
       </main>
 
