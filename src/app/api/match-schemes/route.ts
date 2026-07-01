@@ -16,19 +16,27 @@ export async function POST(req: Request) {
     
     const prompt = `
     You are an expert on Indian Government Welfare Schemes.
-    The user has the following profile:
+    Given the following user profile and a list of available schemes, determine which schemes the user is eligible for.
+    
+    IMPORTANT: Do not just rely on simple keyword matching. Infer the user's eligibility based on demographic factors (age, gender, income, state, occupation, disability, pregnancy, student status) and match them logically against the scheme's criteria.
+
+    User Profile:
     ${JSON.stringify(profile, null, 2)}
     
-    Here is a list of available schemes:
+    Available Schemes:
     ${JSON.stringify(mockSchemes, null, 2)}
     
-    Evaluate which schemes the user is eligible for. 
-    Return a JSON array of objects. Each object should have:
-    - schemeId (matching the id of the scheme)
-    - eligibility (one of: 'Eligible', 'Likely Eligible', 'Need More Information', 'Not Eligible')
-    - reason (a simple explanation of why they qualify or what is missing. CRITICAL: Translate this explanation into the language code ${lang})
+    Return a JSON object with a "matches" array. Each object in the array MUST have:
+    - "id": string (the scheme id)
+    - "name": string
+    - "description": string
+    - "benefits": string
+    - "required_documents": array of strings
+    - "application_link": string
+    - "matchDetails": object with "eligibility" (string: "Eligible" or "Potentially Eligible") and "reason" (string explaining exactly why they match based on their profile in the requested language).
     
-    Return ONLY the JSON array. Do not wrap in markdown \`\`\`json.
+    Return ONLY valid JSON.
+    Translate the "reason" field and any other text fields (like description and benefits) into the language code: ${lang}
     `;
 
     const result = await model.generateContent(prompt);
