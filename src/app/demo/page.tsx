@@ -363,7 +363,7 @@ function VoiceInterfaceContent() {
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col items-center p-4 sm:p-8 w-full max-w-3xl mx-auto pb-32">
+      <main className="flex-1 flex flex-col items-center p-4 sm:p-8 w-full max-w-3xl mx-auto pb-64">
         {!results && !isProcessing && messages.length === 0 && (
           <div className="w-full space-y-8 flex flex-col items-center text-center mt-12">
             <div className="space-y-4">
