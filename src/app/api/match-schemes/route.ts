@@ -42,8 +42,13 @@ export async function POST(req: Request) {
       generationConfig: { responseMimeType: "application/json" }
     });
     
-    // Fallback cleanup
-    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    // Robust JSON extraction
+    text = text.trim();
+    const firstBrace = text.indexOf('{');
+    const lastBrace = text.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace >= firstBrace) {
+      text = text.substring(firstBrace, lastBrace + 1);
+    }
 
     let matches = [];
     try {
