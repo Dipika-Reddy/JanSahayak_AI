@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-
+import { SUPPORTED_LANGUAGES } from "@/lib/translations";
 // --- Dynamic AI Translation Cache ---
 const translationCache = new Map<string, string>();
 
@@ -363,6 +363,15 @@ function VoiceInterfaceContent() {
               <Button size="icon" variant="ghost" onClick={repeatTTS} className="rounded-full w-8 h-8"><Repeat className="w-4 h-4" /></Button>
             </div>
           )}
+          <select 
+            value={langQuery}
+            onChange={(e) => window.location.href = `?lang=${e.target.value}`}
+            className="text-sm border border-zinc-200 rounded-full px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+          >
+            {SUPPORTED_LANGUAGES.map(l => (
+              <option key={l.code} value={l.code}>{l.label}</option>
+            ))}
+          </select>
           <Button variant="outline" size="sm" className="gap-2 rounded-full border-zinc-200" onClick={() => window.location.href = '/'}>
             <T lang={langQuery}>Home</T>
           </Button>
