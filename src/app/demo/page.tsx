@@ -242,10 +242,32 @@ function VoiceInterfaceContent() {
   };
 
   // --- Voice Controls ---
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      // Trigger voice loading early
+      window.speechSynthesis.getVoices();
+    }
+  }, []);
+
+  const setUtteranceVoice = (utterance: SpeechSynthesisUtterance, targetLang: string) => {
+    const voices = window.speechSynthesis.getVoices();
+    const shortLang = targetLang.split('-')[0];
+    
+    let voice = voices.find(v => v.lang === targetLang || v.lang.replace('_', '-') === targetLang);
+    if (!voice) voice = voices.find(v => v.lang.startsWith(shortLang));
+    if (!voice) {
+      const names: Record<string, string> = { 'te': 'Telugu', 'hi': 'Hindi', 'ta': 'Tamil', 'mr': 'Marathi', 'bn': 'Bengali' };
+      if (names[shortLang]) voice = voices.find(v => v.name.toLowerCase().includes(names[shortLang].toLowerCase()));
+    }
+    
+    if (voice) utterance.voice = voice;
+    utterance.lang = targetLang;
+  };
+
   const speakResponse = (text: string) => {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = langQuery;
+    setUtteranceVoice(utterance, langQuery);
     utterance.onend = () => setIsPlaying(false);
     utterance.onstart = () => setIsPlaying(true);
     setCurrentUtterance(utterance);
@@ -266,7 +288,7 @@ function VoiceInterfaceContent() {
     const t = TRANSLATIONS[langQuery] || TRANSLATIONS['en-IN'];
     const text = `${scheme.name}. ${scheme.description}. ${t.benefits}: ${scheme.benefits}. ${t.whyQualify}: ${scheme.matchDetails.reason}. ${t.requiredDocs}: ${scheme.required_documents?.join(', ')}.`;
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = langQuery;
+    setUtteranceVoice(utterance, langQuery);
     utterance.onend = () => {
       setIsPlaying(false);
       setSpeakingScheme(null);
