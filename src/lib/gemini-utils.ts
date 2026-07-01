@@ -12,8 +12,8 @@ export async function generateContentWithRetry(prompt: string, config: any = {},
   // Try preferred model, fallback to 1.5-flash if all retries fail
   const modelsToTry = [
     config.model || "gemini-2.5-flash",
-    "gemini-1.5-flash-latest",
-    "gemini-1.5-flash-8b"
+    "gemini-1.5-pro",
+    "gemini-pro"
   ];
 
   for (const modelName of modelsToTry) {
@@ -32,12 +32,13 @@ export async function generateContentWithRetry(prompt: string, config: any = {},
         attempt++;
         const is503 = error?.message?.includes('503') || error?.status === 503;
         const isRateLimit = error?.message?.includes('429') || error?.status === 429;
+        const is404 = error?.message?.includes('404') || error?.status === 404;
         
         console.warn(`[Gemini API] Attempt ${attempt} failed for ${modelName}:`, error.message);
         
-        // If it's a 429 Rate Limit/Quota Exceeded, instantly switch to fallback model
-        if (isRateLimit && modelName !== modelsToTry[modelsToTry.length - 1]) {
-          console.warn(`[Gemini API] Quota exceeded on ${modelName}, switching to fallback instantly.`);
+        // If it's a 429 Rate Limit/Quota Exceeded, or 404 Not Found instantly switch to fallback model
+        if ((isRateLimit || is404) && modelName !== modelsToTry[modelsToTry.length - 1]) {
+          console.warn(`[Gemini API] Error on ${modelName}, switching to fallback instantly.`);
           break; // Break the while loop to move to the next model in the outer for loop
         }
 
@@ -53,8 +54,10 @@ export async function generateContentWithRetry(prompt: string, config: any = {},
           const delay = Math.pow(2, attempt) * 1000;
           console.log(`[Gemini API] Retrying in ${delay}ms...`);
           await new Promise(res => setTimeout(res, delay));
+        } else if (modelName !== modelsToTry[modelsToTry.length - 1]) {
+           break; // If it's an unretryable error but we have fallbacks, switch to fallback
         } else {
-          throw error; // Not a retryable error
+          throw error; // Not a retryable error and no fallbacks left
         }
       }
     }
