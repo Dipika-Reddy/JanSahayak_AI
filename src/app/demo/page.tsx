@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { SUPPORTED_LANGUAGES, TRANSLATIONS } from "@/lib/translations";
 import { useVoiceRecognition } from "@/hooks/useVoiceRecognition";
+import { voiceManager } from "@/lib/voice-manager";
 
 // --- Static Dictionary Translation ---
 const T = ({ children, lang }: { children: string, lang: string }) => {
@@ -52,7 +53,6 @@ function VoiceInterfaceContent() {
   
   const [speakingScheme, setSpeakingScheme] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentUtterance, setCurrentUtterance] = useState<SpeechSynthesisUtterance | null>(null);
   const [currentReadIndex, setCurrentReadIndex] = useState(-1);
 
   const handleSubmit = async (overrideText: string) => {
@@ -212,42 +212,28 @@ function VoiceInterfaceContent() {
 
   // --- Voice Controls ---
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      // Trigger voice loading early
-      window.speechSynthesis.getVoices();
+    if (voiceManager) {
+      voiceManager.changeLanguage(langQuery);
     }
-  }, []);
-
-  const setUtteranceVoice = (utterance: SpeechSynthesisUtterance, targetLang: string) => {
-    const voices = window.speechSynthesis.getVoices();
-    const shortLang = targetLang.split('-')[0];
-    
-    let voice = voices.find(v => v.lang === targetLang || v.lang.replace('_', '-') === targetLang);
-    if (!voice) voice = voices.find(v => v.lang.startsWith(shortLang));
-    if (!voice) {
-      const names: Record<string, string> = { 'te': 'Telugu', 'hi': 'Hindi', 'ta': 'Tamil', 'mr': 'Marathi', 'bn': 'Bengali' };
-      if (names[shortLang]) voice = voices.find(v => v.name.toLowerCase().includes(names[shortLang].toLowerCase()));
-    }
-    
-    if (voice) utterance.voice = voice;
-    utterance.lang = targetLang;
-  };
+  }, [langQuery]);
 
   const speakResponse = (text: string) => {
-    window.speechSynthesis.cancel();
+    if (!voiceManager) return;
     setRecognitionState('SPEAKING');
-    const utterance = new SpeechSynthesisUtterance(text);
-    setUtteranceVoice(utterance, langQuery);
-    utterance.onend = () => {
-      setIsPlaying(false);
-      setRecognitionState('IDLE');
-    };
-    utterance.onstart = () => setIsPlaying(true);
-    setCurrentUtterance(utterance);
-    window.speechSynthesis.speak(utterance);
+    
+    voiceManager.speak(
+      text,
+      langQuery,
+      () => setIsPlaying(true),
+      () => {
+        setIsPlaying(false);
+        setRecognitionState('IDLE');
+      }
+    );
   };
 
   const playTTS = (scheme: any, index: number) => {
+    if (!voiceManager) return;
     if (speakingScheme === scheme.id && isPlaying) {
       pauseTTS();
       return;
@@ -257,24 +243,24 @@ function VoiceInterfaceContent() {
       return;
     }
     
-    window.speechSynthesis.cancel();
     setRecognitionState('SPEAKING');
     const t = TRANSLATIONS[langQuery] || TRANSLATIONS['en-IN'];
     const text = `${scheme.name}. ${scheme.description}. ${t.benefits}: ${scheme.benefits}. ${t.whyQualify}: ${scheme.matchDetails.reason}. ${t.requiredDocs}: ${scheme.required_documents?.join(', ')}.`;
-    const utterance = new SpeechSynthesisUtterance(text);
-    setUtteranceVoice(utterance, langQuery);
-    utterance.onend = () => {
-      setIsPlaying(false);
-      setSpeakingScheme(null);
-      setRecognitionState('IDLE');
-    };
-    utterance.onstart = () => {
-      setIsPlaying(true);
-      setSpeakingScheme(scheme.id);
-      setCurrentReadIndex(index);
-    };
-    setCurrentUtterance(utterance);
-    window.speechSynthesis.speak(utterance);
+    
+    voiceManager.speak(
+      text,
+      langQuery,
+      () => {
+        setIsPlaying(true);
+        setSpeakingScheme(scheme.id);
+        setCurrentReadIndex(index);
+      },
+      () => {
+        setIsPlaying(false);
+        setSpeakingScheme(null);
+        setRecognitionState('IDLE');
+      }
+    );
   };
 
   const readAllSchemes = () => {
@@ -299,17 +285,17 @@ function VoiceInterfaceContent() {
   };
 
   const pauseTTS = () => {
-    window.speechSynthesis.pause();
+    voiceManager?.pause();
     setIsPlaying(false);
   };
 
   const resumeTTS = () => {
-    window.speechSynthesis.resume();
+    voiceManager?.resume();
     setIsPlaying(true);
   };
 
   const stopTTS = () => {
-    window.speechSynthesis.cancel();
+    voiceManager?.stop();
     setIsPlaying(false);
     setSpeakingScheme(null);
     setRecognitionState(prev => prev === 'SPEAKING' ? 'IDLE' : prev);
