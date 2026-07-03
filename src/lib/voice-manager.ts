@@ -155,7 +155,7 @@ export class VoiceManager {
         return;
       }
 
-      const url = \`https://translate.google.com/translate_tts?ie=UTF-8&q=\${encodeURIComponent(chunkText)}&tl=\${baseLang}&client=tw-ob\`;
+      const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(chunkText)}&tl=${baseLang}&client=tw-ob`;
       this.cloudAudio = new Audio(url);
       
       if (currentChunkIndex === 0 && onStart) {
