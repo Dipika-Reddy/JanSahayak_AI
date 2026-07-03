@@ -467,11 +467,11 @@ function VoiceInterfaceContent() {
                   </CardContent>
                   <CardFooter className="bg-zinc-50 dark:bg-zinc-900/50 flex flex-col sm:flex-row gap-3 pt-4">
                     {scheme.application_link ? (
-                      <Button asChild className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white shadow-sm">
-                        <a href={getTranslatedLink(scheme.application_link)} target="_blank" rel="noopener noreferrer">
+                      <a href={getTranslatedLink(scheme.application_link)} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
+                        <Button className="w-full bg-green-600 hover:bg-green-700 text-white shadow-sm">
                           <T lang={langQuery}>Apply Online</T>
-                        </a>
-                      </Button>
+                        </Button>
+                      </a>
                     ) : scheme.offline_process ? (
                       <div className="w-full p-3 rounded-lg bg-orange-50 border border-orange-200 text-sm text-orange-800 dark:bg-orange-900/20 dark:border-orange-800 dark:text-orange-200">
                         <strong><T lang={langQuery}>Offline Application:</T></strong> {scheme.offline_process}
