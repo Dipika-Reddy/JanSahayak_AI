@@ -43,9 +43,6 @@ function VoiceInterfaceContent() {
   const searchParams = useSearchParams();
   const langQuery = searchParams.get('lang') || 'en-IN';
   
-  const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState("");
-  const [isProcessing, setIsProcessing] = useState(false);
   const [processingState, setProcessingState] = useState(""); 
   
   const [profile, setProfile] = useState<any>(null);
