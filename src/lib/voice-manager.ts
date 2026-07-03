@@ -3,7 +3,13 @@ export class VoiceManager {
   private voices: SpeechSynthesisVoice[] = [];
   private currentLanguage: string = 'en-IN';
   private cloudAudio: HTMLAudioElement | null = null;
-  private isBrowserSpeaking: boolean = false;
+  private isSpeaking: boolean = false;
+  
+  // Queue system
+  private audioQueue: string[] = [];
+  private isProcessingQueue: boolean = false;
+  private globalOnStart?: () => void;
+  private globalOnEnd?: () => void;
 
   private constructor() {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
@@ -23,23 +29,30 @@ export class VoiceManager {
 
   private loadVoices() {
     this.voices = window.speechSynthesis.getVoices();
-    console.log(`[VoiceManager] Loaded ${this.voices.length} native browser voices.`);
   }
 
   public changeLanguage(lang: string) {
     this.currentLanguage = lang;
-    console.log(`[VoiceManager] Selected Language changed to: ${this.currentLanguage}`);
+    console.log(`[VoiceManager] Language instantly switched to: ${this.currentLanguage}`);
   }
 
   public stop() {
+    this.audioQueue = []; // Clear queue immediately
+    this.isProcessingQueue = false;
+    this.isSpeaking = false;
+
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel();
-      this.isBrowserSpeaking = false;
     }
     if (this.cloudAudio) {
       this.cloudAudio.pause();
-      this.cloudAudio.currentTime = 0;
+      this.cloudAudio.removeAttribute('src');
+      this.cloudAudio.load();
       this.cloudAudio = null;
+    }
+    if (this.globalOnEnd) {
+      this.globalOnEnd();
+      this.globalOnEnd = undefined;
     }
   }
 
@@ -61,124 +74,142 @@ export class VoiceManager {
     }
   }
 
-  private findBestVoice(langCode: string): SpeechSynthesisVoice | null {
-    if (!this.voices.length) this.loadVoices();
-
-    const exactMatch = this.voices.find(v => v.lang === langCode);
-    if (exactMatch) return exactMatch;
-
-    const baseLang = langCode.split('-')[0];
-    const partialMatch = this.voices.find(v => v.lang.startsWith(baseLang));
-    
-    return partialMatch || null;
-  }
-
+  // Allow passing an array of strings for queued reading with natural pauses
   public speak(
-    text: string, 
+    textOrTexts: string | string[], 
     lang: string = this.currentLanguage, 
     onStart?: () => void, 
     onEnd?: () => void
   ) {
-    this.stop(); // Always cancel previous speech
+    this.stop(); // Interruption: Cancel any previous speech/queue immediately
 
-    if (!text || text.trim() === '') {
+    let textsToQueue: string[] = [];
+    if (Array.isArray(textOrTexts)) {
+      textsToQueue = textOrTexts;
+    } else {
+      // Chunk long text by sentences to allow natural queuing
+      textsToQueue = textOrTexts.match(/[^.!?]+[.!?]*/g) || [textOrTexts];
+    }
+    
+    // Clean up texts
+    textsToQueue = textsToQueue.map(t => t.replace(/[*#]/g, '').trim()).filter(t => t.length > 0);
+
+    if (textsToQueue.length === 0) {
       if (onEnd) onEnd();
       return;
     }
 
-    // Clean up text for TTS (remove markdown asterisks, hashes, etc.)
-    const cleanText = text.replace(/[*#]/g, '').trim();
+    this.audioQueue = textsToQueue;
+    this.globalOnStart = onStart;
+    this.globalOnEnd = onEnd;
+    this.currentLanguage = lang; // Ensure sync
 
-    console.log(`[VoiceManager] Preparing to speak...`);
-    console.log(`- Translation Locale: ${lang}`);
-    console.log(`- Speech Synthesis Supported: ${typeof window !== 'undefined' && !!window.speechSynthesis}`);
-    console.log(`- Number of Installed Voices: ${this.voices.length}`);
+    console.log(`[VoiceManager] Starting new speech queue for lang: ${lang} (${this.audioQueue.length} chunks)`);
+    this.processQueue();
+  }
 
-    const bestVoice = this.findBestVoice(lang);
+  private processQueue() {
+    if (this.audioQueue.length === 0) {
+      this.isProcessingQueue = false;
+      this.isSpeaking = false;
+      if (this.globalOnEnd) {
+        this.globalOnEnd();
+        this.globalOnEnd = undefined;
+      }
+      return;
+    }
 
-    if (bestVoice && typeof window !== 'undefined' && window.speechSynthesis) {
-      console.log(`- Selected Voice: ${bestVoice.name} (Native Browser)`);
-      console.log(`- Voice Locale: ${bestVoice.lang}`);
-      
-      const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.voice = bestVoice;
-      utterance.lang = bestVoice.lang; // Must explicitly set lang to match voice
-      utterance.rate = 0.9;
-      utterance.pitch = 1.0;
-      utterance.volume = 1.0;
+    this.isProcessingQueue = true;
+    const chunkText = this.audioQueue.shift()!;
+    
+    if (!this.isSpeaking && this.globalOnStart) {
+      this.globalOnStart();
+      this.globalOnStart = undefined; // Only call once per total queue
+    }
+    this.isSpeaking = true;
 
-      utterance.onstart = () => {
-        this.isBrowserSpeaking = true;
-        if (onStart) onStart();
-      };
-      
-      utterance.onend = () => {
-        this.isBrowserSpeaking = false;
-        if (onEnd) onEnd();
-      };
-      
-      utterance.onerror = (e) => {
-        console.error("[VoiceManager] SpeechSynthesis Error:", e);
-        this.isBrowserSpeaking = false;
-        if (onEnd) onEnd();
-      };
-
-      window.speechSynthesis.speak(utterance);
+    // PREFERRED: Cloud TTS Priority
+    // We prioritize Cloud TTS for native Indian languages because browser support is incredibly inconsistent
+    const isIndianLanguage = ['te', 'hi', 'ta', 'kn', 'ml', 'bn', 'mr', 'gu', 'pa'].includes(this.currentLanguage.split('-')[0]);
+    
+    if (isIndianLanguage) {
+      console.log(`[VoiceManager] Using Cloud TTS (Preferred) for: ${this.currentLanguage}`);
+      this.playCloudAudio(chunkText, this.currentLanguage);
     } else {
-      console.warn(`[VoiceManager] No native voice found for ${lang}. Falling back to Cloud TTS.`);
-      console.log(`- Selected Voice: Google Translate TTS (Cloud Fallback)`);
-      console.log(`- Voice Locale: ${lang}`);
-      
-      this.speakWithCloudFallback(cleanText, lang, onStart, onEnd);
+      // For English or if cloud fails, fallback to browser
+      const bestVoice = this.findBestBrowserVoice(this.currentLanguage);
+      if (bestVoice && typeof window !== 'undefined' && window.speechSynthesis) {
+        console.log(`[VoiceManager] Using Browser TTS (Fallback) for: ${this.currentLanguage}`);
+        this.playBrowserAudio(chunkText, bestVoice);
+      } else {
+        // Ultimate fallback
+        this.playCloudAudio(chunkText, this.currentLanguage);
+      }
     }
   }
 
-  private speakWithCloudFallback(text: string, lang: string, onStart?: () => void, onEnd?: () => void) {
-    // Note: The Google Translate TTS endpoint expects standard short ISO codes (e.g. 'te' instead of 'te-IN')
+  private playCloudAudio(text: string, lang: string) {
     const baseLang = lang.split('-')[0];
+    const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=${baseLang}&client=tw-ob`;
     
-    // Google Translate TTS is limited to ~200 characters per request.
-    // We will chunk it roughly by sentences.
-    const chunks = text.match(/[^.!?]+[.!?]*/g) || [text];
-    let currentChunkIndex = 0;
-
-    const playNextChunk = () => {
-      if (currentChunkIndex >= chunks.length) {
-        if (onEnd) onEnd();
-        return;
-      }
-      
-      const chunkText = chunks[currentChunkIndex].trim();
-      if (!chunkText) {
-        currentChunkIndex++;
-        playNextChunk();
-        return;
-      }
-
-      const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(chunkText)}&tl=${baseLang}&client=tw-ob`;
-      this.cloudAudio = new Audio(url);
-      
-      if (currentChunkIndex === 0 && onStart) {
-        onStart();
-      }
-
-      this.cloudAudio.onended = () => {
-        currentChunkIndex++;
-        playNextChunk();
-      };
-
-      this.cloudAudio.onerror = (e) => {
-        console.error("[VoiceManager] Cloud Audio Error:", e);
-        if (onEnd) onEnd(); // gracefully fail
-      };
-
-      this.cloudAudio.play().catch(e => {
-        console.error("[VoiceManager] Audio play blocked or failed:", e);
-        if (onEnd) onEnd();
-      });
+    this.cloudAudio = new Audio(url);
+    
+    this.cloudAudio.onended = () => {
+      // Add a natural 300ms pause between chunks like Google Assistant
+      setTimeout(() => {
+        if (this.isProcessingQueue) this.processQueue();
+      }, 300);
     };
 
-    playNextChunk();
+    this.cloudAudio.onerror = (e) => {
+      console.warn("[VoiceManager] Cloud Audio Failed. Attempting Browser Fallback...", e);
+      const bestVoice = this.findBestBrowserVoice(lang);
+      if (bestVoice) {
+        this.playBrowserAudio(text, bestVoice);
+      } else {
+        if (this.isProcessingQueue) this.processQueue(); // skip chunk gracefully
+      }
+    };
+
+    this.cloudAudio.play().catch(e => {
+      console.error("[VoiceManager] Audio play blocked:", e);
+      if (this.isProcessingQueue) this.processQueue();
+    });
+  }
+
+  private playBrowserAudio(text: string, voice: SpeechSynthesisVoice) {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.voice = voice;
+    utterance.lang = voice.lang;
+    utterance.rate = 0.9;
+    
+    utterance.onend = () => {
+      setTimeout(() => {
+        if (this.isProcessingQueue) this.processQueue();
+      }, 300);
+    };
+
+    utterance.onerror = (e) => {
+      console.error("[VoiceManager] SpeechSynthesis Error:", e);
+      if (this.isProcessingQueue) this.processQueue();
+    };
+
+    window.speechSynthesis.speak(utterance);
+  }
+
+  private findBestBrowserVoice(langCode: string): SpeechSynthesisVoice | null {
+    if (!this.voices.length && typeof window !== 'undefined') {
+      this.voices = window.speechSynthesis.getVoices();
+    }
+
+    const exactMatch = this.voices.find(v => v.lang === langCode || v.lang.replace('_', '-') === langCode);
+    if (exactMatch) return exactMatch;
+
+    const baseLang = langCode.split('-')[0];
+    const partialMatch = this.voices.find(v => v.lang.startsWith(baseLang));
+    return partialMatch || null;
   }
 }
 

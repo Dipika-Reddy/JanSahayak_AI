@@ -245,10 +245,18 @@ function VoiceInterfaceContent() {
     
     setRecognitionState('SPEAKING');
     const t = TRANSLATIONS[langQuery] || TRANSLATIONS['en-IN'];
-    const text = `${scheme.name}. ${scheme.description}. ${t.benefits}: ${scheme.benefits}. ${t.whyQualify}: ${scheme.matchDetails.reason}. ${t.requiredDocs}: ${scheme.required_documents?.join(', ')}.`;
+    
+    // Chunk for natural pauses
+    const textChunks = [
+      `${scheme.name}.`,
+      `${scheme.description}.`,
+      `${t.benefits}: ${scheme.benefits}.`,
+      `${t.whyQualify}: ${scheme.matchDetails.reason}.`,
+      `${t.requiredDocs}: ${scheme.required_documents?.join(', ')}.`
+    ];
     
     voiceManager.speak(
-      text,
+      textChunks,
       langQuery,
       () => {
         setIsPlaying(true);
@@ -264,8 +272,32 @@ function VoiceInterfaceContent() {
   };
 
   const readAllSchemes = () => {
-    if (!results || results.length === 0) return;
-    playTTS(results[0], 0);
+    if (!results || results.length === 0 || !voiceManager) return;
+    
+    setRecognitionState('SPEAKING');
+    const t = TRANSLATIONS[langQuery] || TRANSLATIONS['en-IN'];
+    
+    const allChunks: string[] = [];
+    results.forEach((scheme: any) => {
+      allChunks.push(`${scheme.name}.`);
+      allChunks.push(`${scheme.description}.`);
+      allChunks.push(`${t.benefits}: ${scheme.benefits}.`);
+      allChunks.push(`${t.whyQualify}: ${scheme.matchDetails.reason}.`);
+      allChunks.push(`${t.requiredDocs}: ${scheme.required_documents?.join(', ')}.`);
+    });
+    
+    voiceManager.speak(
+      allChunks,
+      langQuery,
+      () => {
+        setIsPlaying(true);
+        setSpeakingScheme(null);
+      },
+      () => {
+        setIsPlaying(false);
+        setRecognitionState('IDLE');
+      }
+    );
   };
 
   const nextScheme = () => {

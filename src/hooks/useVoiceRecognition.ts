@@ -63,9 +63,14 @@ export function useVoiceRecognition({ lang, onAutoSubmit, silenceTimeoutMs = 500
   }, [clearSilenceTimer, silenceTimeoutMs, onAutoSubmit, cleanupRecognition, stopListening]);
 
   const startListening = useCallback(() => {
-    if (recognitionState === 'PROCESSING' || recognitionState === 'SPEAKING') {
+    if (recognitionState === 'PROCESSING') {
       return;
     }
+    
+    // Interruption: Instantly stop TTS when user starts listening
+    import('@/lib/voice-manager').then(({ voiceManager }) => {
+      voiceManager?.stop();
+    });
 
     cleanupRecognition();
     setTranscript("");
