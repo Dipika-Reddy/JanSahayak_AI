@@ -44,9 +44,21 @@ export default function LandingPage() {
   // Dynamically translate homepage UI when a language other than standard ones is chosen
   useEffect(() => {
     const translateUI = async () => {
-      // Statically supported languages are en-IN, hi-IN, te-IN, ta-IN, mr-IN, bn-IN
-      const isStatic = ['en-IN', 'hi-IN', 'te-IN', 'ta-IN', 'mr-IN', 'bn-IN'].includes(selectedLang);
+      // Statically supported languages are en-IN, hi-IN, te-IN, ta-IN (MR and BN have missing landing page translations, so they translate dynamically)
+      const isStatic = ['en-IN', 'hi-IN', 'te-IN', 'ta-IN'].includes(selectedLang);
       if (!isStatic) {
+        // Check local storage cache first
+        const cacheKey = `trans_landing_v2_${selectedLang}`;
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          try {
+            setDynamicTranslations(JSON.parse(cached));
+            return;
+          } catch (e) {
+            console.error("Failed to parse cached translations", e);
+          }
+        }
+
         setIsTranslating(true);
         try {
           const texts = LANDING_KEYS.map(key => TRANSLATIONS['en-IN'][key]);
@@ -64,6 +76,7 @@ export default function LandingPage() {
               mapped[key] = data.translations[englishText] || englishText;
             });
             setDynamicTranslations(mapped);
+            localStorage.setItem(cacheKey, JSON.stringify(mapped));
           }
         } catch (e) {
           console.error("Dynamic UI translation failed:", e);

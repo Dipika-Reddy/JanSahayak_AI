@@ -68,9 +68,21 @@ function VoiceInterfaceContent() {
   // Dynamically translate UI when a language other than standard ones is chosen
   useEffect(() => {
     const translateUI = async () => {
-      // Statically supported languages are en-IN, hi-IN, te-IN, ta-IN, mr-IN, bn-IN
-      const isStatic = ['en-IN', 'hi-IN', 'te-IN', 'ta-IN', 'mr-IN', 'bn-IN'].includes(currentLang);
+      // Statically supported languages are en-IN, hi-IN, te-IN, ta-IN (MR and BN have minimal static files, so we translate dynamically)
+      const isStatic = ['en-IN', 'hi-IN', 'te-IN', 'ta-IN'].includes(currentLang);
       if (!isStatic) {
+        // Check local storage cache first
+        const cacheKey = `trans_demo_v2_${currentLang}`;
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          try {
+            setDynamicTranslations(JSON.parse(cached));
+            return;
+          } catch (e) {
+            console.error("Failed to parse cached translations", e);
+          }
+        }
+
         setIsTranslating(true);
         try {
           const res = await fetch('/api/translate', {
@@ -81,6 +93,7 @@ function VoiceInterfaceContent() {
           const data = await res.json();
           if (data.translations) {
             setDynamicTranslations(data.translations);
+            localStorage.setItem(cacheKey, JSON.stringify(data.translations));
           }
         } catch (e) {
           console.error("Dynamic UI translation failed:", e);
