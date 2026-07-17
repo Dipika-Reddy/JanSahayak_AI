@@ -634,18 +634,35 @@ function VoiceInterfaceContent() {
               results.map((scheme, i) => (
                 <Card id={`scheme-${scheme.id || i}`} key={scheme.id || i} className={`overflow-hidden border-zinc-200 dark:border-zinc-800 transition-all ${speakingScheme === scheme.id ? 'ring-2 ring-blue-500 shadow-md' : ''}`}>
                   <CardHeader className="bg-zinc-50 dark:bg-zinc-900/50 pb-4">
-                    <div className="flex justify-between items-start gap-4">
-                      <div>
+                    <div className="flex justify-between items-start gap-3">
+                      <div className="flex-1 min-w-0">
                         <CardTitle className="text-xl text-blue-700 dark:text-blue-400">{scheme.name}</CardTitle>
                         <CardDescription className="mt-1 text-sm whitespace-pre-line">{cleanHtmlText(scheme.description)}</CardDescription>
                       </div>
-                      <Badge className={
-                        scheme.matchDetails.eligibility === 'Eligible' || scheme.matchDetails.eligibility === 'पात्र' || scheme.matchDetails.eligibility === 'அர்ஹులు' ? 'bg-green-100 text-green-800 hover:bg-green-100' :
-                        scheme.matchDetails.eligibility === 'Not Eligible' || scheme.matchDetails.eligibility === 'अपात्र' ? 'bg-red-100 text-red-800 hover:bg-red-100' :
-                        'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'
-                      }>
-                        {scheme.matchDetails.eligibility}
-                      </Badge>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Badge className={
+                          scheme.matchDetails.eligibility === 'Eligible' || scheme.matchDetails.eligibility === 'पात्र' || scheme.matchDetails.eligibility === 'அர்ஹులు' ? 'bg-green-100 text-green-800 hover:bg-green-100' :
+                          scheme.matchDetails.eligibility === 'Not Eligible' || scheme.matchDetails.eligibility === 'अपात्र' ? 'bg-red-100 text-red-800 hover:bg-red-100' :
+                          'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'
+                        }>
+                          {scheme.matchDetails.eligibility}
+                        </Badge>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          title="Read scheme aloud"
+                          className={`rounded-full w-10 h-10 shrink-0 transition-all ${
+                            speakingScheme === scheme.id
+                              ? 'text-red-600 bg-red-100 hover:bg-red-200 animate-pulse'
+                              : 'text-blue-600 bg-blue-50 hover:bg-blue-100'
+                          }`}
+                          onClick={() => playTTS(scheme, i)}
+                        >
+                          {speakingScheme === scheme.id && isPlaying
+                            ? <Square className="w-6 h-6 fill-current" />
+                            : <Volume2 className="w-6 h-6" />}
+                        </Button>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="pt-4 space-y-4">
@@ -657,19 +674,9 @@ function VoiceInterfaceContent() {
                       </div>
                     </div>
                     
-                    <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-blue-900 dark:text-blue-200"><T lang={langQuery}>Benefits</T></p>
-                        <p className="text-sm text-blue-800 dark:text-blue-300 whitespace-pre-line">{cleanHtmlText(scheme.benefits)}</p>
-                      </div>
-                      <Button 
-                        size="icon" 
-                        variant="ghost" 
-                        className={`rounded-full shrink-0 ${speakingScheme === scheme.id ? 'text-red-600 bg-red-100' : 'text-blue-600'}`}
-                        onClick={() => playTTS(scheme, i)}
-                      >
-                        {speakingScheme === scheme.id && isPlaying ? <Square className="w-5 h-5 fill-current" /> : <Volume2 className="w-5 h-5" />}
-                      </Button>
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                      <p className="font-medium text-blue-900 dark:text-blue-200"><T lang={langQuery}>Benefits</T></p>
+                      <p className="text-sm text-blue-800 dark:text-blue-300 whitespace-pre-line">{cleanHtmlText(scheme.benefits)}</p>
                     </div>
 
                     <div>
