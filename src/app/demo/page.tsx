@@ -221,13 +221,8 @@ function VoiceInterfaceContent() {
       const profileData = await profileRes.json();
       if (profileData.error) throw new Error(profileData.error);
       
-      // Auto-detect language and switch dynamically
-      const targetLang = profileData.detectedLanguage || currentLang;
-      if (profileData.detectedLanguage && profileData.detectedLanguage !== currentLang) {
-        console.log(`[Auto-Language Detection] Switching language to: ${profileData.detectedLanguage}`);
-        setCurrentLang(profileData.detectedLanguage);
-        window.history.pushState(null, '', `?lang=${profileData.detectedLanguage}`);
-      }
+      // Always use the user's explicitly selected language — do NOT auto-override it
+      const targetLang = currentLang;
 
       setProfile(profileData.profile);
       setProcessingState("Finding matching schemes...");
@@ -494,8 +489,12 @@ function VoiceInterfaceContent() {
             </div>
           )}
           <select 
-            value={langQuery}
-            onChange={(e) => window.location.href = `?lang=${e.target.value}`}
+            value={currentLang}
+            onChange={(e) => {
+              const newLang = e.target.value;
+              setCurrentLang(newLang);
+              window.history.replaceState(null, '', `?lang=${newLang}`);
+            }}
             className="text-sm border border-zinc-200 rounded-full px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
           >
             {SUPPORTED_LANGUAGES.map(l => (

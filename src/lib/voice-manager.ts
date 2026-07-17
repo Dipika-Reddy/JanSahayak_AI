@@ -128,9 +128,11 @@ export class VoiceManager {
     }
     this.isSpeaking = true;
 
-    // PREFERRED: Cloud TTS Priority
-    // We prioritize Cloud TTS for native Indian languages because browser support is incredibly inconsistent
-    const isIndianLanguage = ['te', 'hi', 'ta', 'kn', 'ml', 'bn', 'mr', 'gu', 'pa'].includes(this.currentLanguage.split('-')[0]);
+    // ALL Indian languages — use Cloud TTS (browser has near-zero support for Indian scripts)
+    const isIndianLanguage = [
+      'te', 'hi', 'ta', 'kn', 'ml', 'bn', 'mr', 'gu', 'pa',
+      'or', 'as', 'ur', 'sa', 'sd', 'ks', 'mai', 'brx', 'doi', 'mni', 'sat', 'kok', 'ne'
+    ].includes(this.currentLanguage.split('-')[0]);
     
     if (isIndianLanguage) {
       console.log(`[VoiceManager] Using Cloud TTS (Preferred) for: ${this.currentLanguage}`);
