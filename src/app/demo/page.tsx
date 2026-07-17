@@ -477,11 +477,9 @@ function VoiceInterfaceContent() {
     playTTS(results[currentReadIndex + 1], currentReadIndex + 1);
   };
 
-  const getTranslatedLink = (url: string) => {
-    if (langQuery === 'en' || langQuery === 'en-IN') return url;
-    const langCode = langQuery.split('-')[0]; // convert en-IN to en, hi-IN to hi
-    return `https://translate.google.com/translate?sl=en&tl=${langCode}&u=${encodeURIComponent(url)}`;
-  };
+  // Always open the original official URL — the page content is already translated
+  // by our translation system. Google Translate wrapper was unreliable for gov.in sites.
+  const getTranslatedLink = (url: string) => url;
 
   const prevScheme = () => {
     if (!results || currentReadIndex <= 0) return;
