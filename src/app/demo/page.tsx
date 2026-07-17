@@ -229,8 +229,26 @@ function VoiceInterfaceContent() {
       
       const matches = await runSchemeMatching(profileData.profile, targetLang);
       
-      const t = TRANSLATIONS[targetLang] || TRANSLATIONS['en-IN'];
-      const respText = `${t.foundSchemes1 || 'I found '}${matches.length}${t.foundSchemes2 || ' schemes for you. You can ask me to read them or ask follow-up questions.'}`;
+      // Build the response text in the selected language
+      const staticT = TRANSLATIONS[targetLang];
+      let respText: string;
+      if (staticT?.foundSchemes1) {
+        // Static translation available (en, hi, te, ta)
+        respText = `${staticT.foundSchemes1}${matches.length}${staticT.foundSchemes2}`;
+      } else {
+        // Dynamically translate for other languages
+        const englishText = `I found ${matches.length} schemes for you. You can ask me to read them or ask follow-up questions.`;
+        try {
+          const langCode = targetLang.split('-')[0];
+          const ttsLang = ['brx', 'ks', 'mni', 'sat', 'doi', 'mai', 'kok'].includes(langCode) ? 'hi' : langCode;
+          const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${ttsLang}&dt=t&q=${encodeURIComponent(englishText)}`;
+          const res = await fetch(url);
+          const data = await res.json();
+          respText = data?.[0]?.map((x: any) => x[0]).join('') || englishText;
+        } catch {
+          respText = `I found ${matches.length} schemes for you. You can ask me to read them or ask follow-up questions.`;
+        }
+      }
 
       setMessages([
         { role: 'user', content: textToSubmit },
@@ -248,6 +266,7 @@ function VoiceInterfaceContent() {
       }
     }
   };
+
 
   const handleFollowUpChat = async (textToSubmit: string) => {
     const newMessages = [...messages, { role: 'user' as const, content: textToSubmit }];
@@ -356,7 +375,28 @@ function VoiceInterfaceContent() {
     );
   };
 
-  const playTTS = (scheme: any, index: number) => {
+  /** Translates an array of text chunks via Google Translate for the current language */
+  const translateChunks = async (chunks: string[], lang: string): Promise<string[]> => {
+    if (lang === 'en-IN') return chunks;
+    try {
+      const langCode = lang.split('-')[0];
+      const ttsLang = ['brx', 'ks', 'mni', 'sat', 'doi', 'mai', 'kok'].includes(langCode) ? 'hi' : langCode;
+      const delimiter = ' ___ ';
+      const joined = chunks.join(delimiter);
+      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${ttsLang}&dt=t&q=${encodeURIComponent(joined)}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`GT ${res.status}`);
+      const data = await res.json();
+      const translated: string = data?.[0]?.map((x: any) => x[0]).join('') || '';
+      const parts = translated.split(/\s*___\s*/);
+      return chunks.map((c, i) => parts[i]?.trim() || c);
+    } catch (e) {
+      console.warn('[TTS] Chunk translation failed, speaking in English:', e);
+      return chunks;
+    }
+  };
+
+  const playTTS = async (scheme: any, index: number) => {
     if (!voiceManager) return;
     if (speakingScheme === scheme.id && isPlaying) {
       pauseTTS();
@@ -370,14 +410,17 @@ function VoiceInterfaceContent() {
     setRecognitionState('SPEAKING');
     const t = TRANSLATIONS[currentLang] || TRANSLATIONS['en-IN'];
     
-    // Chunk for natural pauses
-    const textChunks = [
+    // Build English chunks first (reason is already translated by match-schemes API)
+    const rawChunks = [
       `${scheme.name}.`,
       `${cleanHtmlText(scheme.description)}.`,
-      `${t.benefits}: ${cleanHtmlText(scheme.benefits)}.`,
-      `${t.whyQualify}: ${scheme.matchDetails.reason}.`,
-      `${t.requiredDocs}: ${scheme.required_documents?.join(', ')}.`
+      `${t.benefits || 'Benefits'}: ${cleanHtmlText(scheme.benefits)}.`,
+      `${t.whyQualify || 'Why you qualify'}: ${scheme.matchDetails.reason}.`,
+      `${t.requiredDocs || 'Required Documents'}: ${scheme.required_documents?.join(', ')}.`
     ];
+
+    // Translate scheme text (description, benefits, docs) to the selected language
+    const textChunks = await translateChunks(rawChunks, currentLang);
     
     voiceManager.speak(
       textChunks,
@@ -395,24 +438,27 @@ function VoiceInterfaceContent() {
     );
   };
 
-  const readAllSchemes = () => {
+  const readAllSchemes = async () => {
     if (!results || results.length === 0 || !voiceManager) return;
     
     setRecognitionState('SPEAKING');
-    const t = TRANSLATIONS[langQuery] || TRANSLATIONS['en-IN'];
+    const t = TRANSLATIONS[currentLang] || TRANSLATIONS['en-IN'];
     
-    const allChunks: string[] = [];
+    const allChunksRaw: string[] = [];
     results.forEach((scheme: any) => {
-      allChunks.push(`${scheme.name}.`);
-      allChunks.push(`${cleanHtmlText(scheme.description)}.`);
-      allChunks.push(`${t.benefits}: ${cleanHtmlText(scheme.benefits)}.`);
-      allChunks.push(`${t.whyQualify}: ${scheme.matchDetails.reason}.`);
-      allChunks.push(`${t.requiredDocs}: ${scheme.required_documents?.join(', ')}.`);
+      allChunksRaw.push(`${scheme.name}.`);
+      allChunksRaw.push(`${cleanHtmlText(scheme.description)}.`);
+      allChunksRaw.push(`${t.benefits || 'Benefits'}: ${cleanHtmlText(scheme.benefits)}.`);
+      allChunksRaw.push(`${t.whyQualify || 'Why you qualify'}: ${scheme.matchDetails.reason}.`);
+      allChunksRaw.push(`${t.requiredDocs || 'Required Documents'}: ${scheme.required_documents?.join(', ')}.`);
     });
+
+    // Translate all chunks to the selected language
+    const allChunks = await translateChunks(allChunksRaw, currentLang);
     
     voiceManager.speak(
       allChunks,
-      langQuery,
+      currentLang,
       () => {
         setIsPlaying(true);
         setSpeakingScheme(null);
