@@ -13,9 +13,11 @@ export async function POST(req: Request) {
     }
 
     const prompt = `
-    You are an AI assistant that extracts user profiles from text. 
-    Extract the following fields if present: age, gender, occupation, state, district, disability, category, farmer status, income, marital status, pregnant.
-    Return ONLY a JSON object with the extracted keys and values. If a field is not mentioned, omit it from the JSON.
+    You are an AI assistant that extracts user profiles and detects languages from text. 
+    1. Extract the following fields if present: age, gender, occupation, state, district, disability, category, farmer status, income, marital status, pregnant.
+    2. Detect the language of the input text and identify its standard language code (e.g., 'en-IN' for English, 'hi-IN' for Hindi, 'te-IN' for Telugu, 'ta-IN' for Tamil, 'kn-IN' for Kannada, 'mr-IN' for Marathi, 'bn-IN' for Bengali, etc. If it is standard Hindi/Telugu/etc. just map it to the corresponding -IN code). Return this code under the "detectedLanguage" key.
+
+    Return ONLY a JSON object with the extracted keys, values, and the "detectedLanguage" key. If a profile field is not mentioned, omit it from the JSON.
 
     Text:
     "${transcript}"
@@ -35,14 +37,19 @@ export async function POST(req: Request) {
     }
     
     let profile = {};
+    let detectedLanguage = 'en-IN';
     try {
-      profile = text ? JSON.parse(text) : {};
+      const parsed = text ? JSON.parse(text) : {};
+      detectedLanguage = parsed.detectedLanguage || 'en-IN';
+      // Clean detectedLanguage from profile keys
+      delete parsed.detectedLanguage;
+      profile = parsed;
     } catch (parseError) {
       console.error('Failed to parse Gemini JSON output:', text);
       return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 500 });
     }
 
-    return NextResponse.json({ profile });
+    return NextResponse.json({ profile, detectedLanguage });
   } catch (error) {
     console.warn('Error in extract-profile API, falling back to mock data:', error);
     return NextResponse.json({ 
@@ -52,7 +59,8 @@ export async function POST(req: Request) {
         occupation: "Farmer",
         income: "30000",
         state: "Andhra Pradesh"
-      }
+      },
+      detectedLanguage: "en-IN"
     });
   }
 }

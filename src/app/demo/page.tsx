@@ -49,6 +49,7 @@ function VoiceInterfaceContent() {
   const searchParams = useSearchParams();
   const langQuery = searchParams.get('lang') || 'en-IN';
   
+  const [currentLang, setCurrentLang] = useState(langQuery);
   const [processingState, setProcessingState] = useState(""); 
   
   const [profile, setProfile] = useState<any>(null);
@@ -83,7 +84,7 @@ function VoiceInterfaceContent() {
     startListening,
     stopListening
   } = useVoiceRecognition({
-    lang: langQuery,
+    lang: currentLang,
     onAutoSubmit: handleSubmit,
     silenceTimeoutMs: 5000
   });
@@ -99,6 +100,23 @@ function VoiceInterfaceContent() {
     }
   };
 
+  const runSchemeMatching = async (currentProfile: any, langOverride?: string) => {
+    try {
+      const matchRes = await fetch("/api/match-schemes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profile: currentProfile, lang: langOverride || currentLang }),
+      });
+      const matchData = await matchRes.json();
+      if (matchData.error) throw new Error(matchData.error);
+      setResults(matchData.matches);
+      return matchData.matches;
+    } catch (e) {
+      console.error("Failed to update scheme matches:", e);
+      return results || [];
+    }
+  };
+
   const handleInitialSearch = async (textToSubmit: string) => {
     try {
       setProcessingState("Understanding your profile...");
@@ -110,28 +128,28 @@ function VoiceInterfaceContent() {
       const profileData = await profileRes.json();
       if (profileData.error) throw new Error(profileData.error);
       
+      // Auto-detect language and switch dynamically
+      const targetLang = profileData.detectedLanguage || currentLang;
+      if (profileData.detectedLanguage && profileData.detectedLanguage !== currentLang) {
+        console.log(`[Auto-Language Detection] Switching language to: ${profileData.detectedLanguage}`);
+        setCurrentLang(profileData.detectedLanguage);
+        window.history.pushState(null, '', `?lang=${profileData.detectedLanguage}`);
+      }
+
       setProfile(profileData.profile);
       setProcessingState("Finding matching schemes...");
       
-      const matchRes = await fetch("/api/match-schemes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profile: profileData.profile, lang: langQuery }),
-      });
-      const matchData = await matchRes.json();
-      if (matchData.error) throw new Error(matchData.error);
+      const matches = await runSchemeMatching(profileData.profile, targetLang);
       
-      setResults(matchData.matches);
-      
-      const t = TRANSLATIONS[langQuery] || TRANSLATIONS['en-IN'];
-      const respText = `${t.foundSchemes1 || 'I found '}${matchData.matches.length}${t.foundSchemes2 || ' schemes for you. You can ask me to read them or ask follow-up questions.'}`;
+      const t = TRANSLATIONS[targetLang] || TRANSLATIONS['en-IN'];
+      const respText = `${t.foundSchemes1 || 'I found '}${matches.length}${t.foundSchemes2 || ' schemes for you. You can ask me to read them or ask follow-up questions.'}`;
 
       setMessages([
         { role: 'user', content: textToSubmit },
         { role: 'assistant', content: respText }
       ]);
       
-      speakResponse(respText);
+      speakResponse(respText, targetLang);
 
     } catch (error) {
       console.error("Error:", error);
@@ -155,17 +173,30 @@ function VoiceInterfaceContent() {
         body: JSON.stringify({ 
           messages: newMessages,
           context: { profile, schemes: results },
-          lang: langQuery
+          lang: currentLang
         }),
       });
       const chatData = await chatRes.json();
       if (chatData.error) throw new Error(chatData.error);
       
-      const { intent, targetSchemeId, acknowledgment, spokenResponse } = chatData;
+      const { intent, targetSchemeId, acknowledgment, spokenResponse, extractedProfileDiff } = chatData;
       
       // Update UI with short acknowledgment only
       setMessages([...newMessages, { role: 'assistant', content: acknowledgment || "..." }]);
       
+      // Merge new profile fields if extracted, then update scheme matches
+      let activeResults = results || [];
+      if (extractedProfileDiff && Object.keys(extractedProfileDiff).length > 0) {
+        const mergedProfile = {
+          ...(profile || {}),
+          ...Object.fromEntries(
+            Object.entries(extractedProfileDiff).filter(([_, v]) => v !== null && v !== undefined)
+          )
+        };
+        setProfile(mergedProfile);
+        activeResults = await runSchemeMatching(mergedProfile);
+      }
+
       // Handle Intents
       if (intent === 'STOP') {
          stopTTS();
@@ -185,7 +216,7 @@ function VoiceInterfaceContent() {
          // HIGHLIGHT TARGET SCHEME
          if (targetSchemeId) {
             setSpeakingScheme(targetSchemeId);
-            const index = results?.findIndex(s => s.id === targetSchemeId) ?? -1;
+            const index = activeResults?.findIndex(s => s.id === targetSchemeId) ?? -1;
             if (index !== -1) setCurrentReadIndex(index);
             // Scroll to it
             setTimeout(() => {
@@ -218,17 +249,17 @@ function VoiceInterfaceContent() {
   // --- Voice Controls ---
   useEffect(() => {
     if (voiceManager) {
-      voiceManager.changeLanguage(langQuery);
+      voiceManager.changeLanguage(currentLang);
     }
-  }, [langQuery]);
+  }, [currentLang]);
 
-  const speakResponse = (text: string) => {
+  const speakResponse = (text: string, langOverride?: string) => {
     if (!voiceManager) return;
     setRecognitionState('SPEAKING');
     
     voiceManager.speak(
       text,
-      langQuery,
+      langOverride || currentLang,
       () => setIsPlaying(true),
       () => {
         setIsPlaying(false);
@@ -249,7 +280,7 @@ function VoiceInterfaceContent() {
     }
     
     setRecognitionState('SPEAKING');
-    const t = TRANSLATIONS[langQuery] || TRANSLATIONS['en-IN'];
+    const t = TRANSLATIONS[currentLang] || TRANSLATIONS['en-IN'];
     
     // Chunk for natural pauses
     const textChunks = [
@@ -262,7 +293,7 @@ function VoiceInterfaceContent() {
     
     voiceManager.speak(
       textChunks,
-      langQuery,
+      currentLang,
       () => {
         setIsPlaying(true);
         setSpeakingScheme(scheme.id);

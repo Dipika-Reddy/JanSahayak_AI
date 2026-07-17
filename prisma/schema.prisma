@@ -1,0 +1,47 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector]
+}
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+model Scheme {
+  id                 String   @id
+  name               String
+  category           String
+  central_or_state   String   // "Central" | "State" | "Both"
+  applicable_states  Json     // Array of strings e.g. ["All"]
+  description        String
+  benefits           String
+  required_documents Json     // Array of strings e.g. ["Aadhaar Card", "Land records"]
+  application_link   String?
+  offline_process    String?
+  nearest_office     String?
+  tags               Json     // Array of strings e.g. ["farmer", "insurance"]
+
+  // Rule-based matching engine fields
+  target_gender      String   // "All" | "Female" | "Male" | "Other"
+  target_occupations Json     // Array of strings e.g. ["Farmer", "Agriculture"]
+  min_age            Int?
+  max_age            Int?
+  income_limit       Float?
+  is_student_only    Boolean  @default(false)
+  is_farmer_only     Boolean  @default(false)
+  is_pregnant_only   Boolean  @default(false)
+  is_senior_only     Boolean  @default(false)
+  is_daily_wage_only Boolean  @default(false)
+  is_bpl_only        Boolean  @default(false)
+
+  // Vector embedding field for semantic search (Gemini text-embedding-004: 768 dimensions)
+  embedding          Unsupported("vector(768)")?
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}

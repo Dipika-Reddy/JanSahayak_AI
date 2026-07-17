@@ -4,7 +4,24 @@ export const SUPPORTED_LANGUAGES = [
   { code: 'te-IN', name: 'Telugu', label: 'తెలుగు' },
   { code: 'ta-IN', name: 'Tamil', label: 'தமிழ்' },
   { code: 'mr-IN', name: 'Marathi', label: 'मराठी' },
-  { code: 'bn-IN', name: 'Bengali', label: 'বাংলা' }
+  { code: 'bn-IN', name: 'Bengali', label: 'বাংলা' },
+  { code: 'gu-IN', name: 'Gujarati', label: 'ગુજરાતી' },
+  { code: 'kn-IN', name: 'Kannada', label: 'ಕನ್ನಡ' },
+  { code: 'ml-IN', name: 'Malayalam', label: 'മലയാളം' },
+  { code: 'pa-IN', name: 'Punjabi', label: 'ਪੰਜਾਬੀ' },
+  { code: 'ur-IN', name: 'Urdu', label: 'اردو' },
+  { code: 'as-IN', name: 'Assamese', label: 'অসমীয়া' },
+  { code: 'or-IN', name: 'Odia', label: 'ଓଡ଼ିଆ' },
+  { code: 'sa-IN', name: 'Sanskrit', label: 'संस्कृतम्' },
+  { code: 'ne-IN', name: 'Nepali', label: 'नेपाली' },
+  { code: 'kok-IN', name: 'Konkani', label: 'कोंकणी' },
+  { code: 'brx-IN', name: 'Bodo', label: 'बोडो' },
+  { code: 'doi-IN', name: 'Dogri', label: 'डोगरी' },
+  { code: 'ks-IN', name: 'Kashmiri', label: 'کٲشُر' },
+  { code: 'mai-IN', name: 'Maithili', label: 'मैथिली' },
+  { code: 'mni-IN', name: 'Manipuri', label: 'মণিপুরী' },
+  { code: 'sat-IN', name: 'Santali', label: 'संताली' },
+  { code: 'sd-IN', name: 'Sindhi', label: 'सिन्धी' }
 ];
 
 export const TRANSLATIONS: Record<string, any> = {

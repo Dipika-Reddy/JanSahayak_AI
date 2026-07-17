@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import { mockSchemes, Scheme } from '@/lib/mock-schemes';
+import { Scheme } from '@/lib/mock-schemes';
 import { TRANSLATIONS } from '@/lib/translations';
+import { prisma } from '@/lib/prisma';
 
 function getTranslation(lang: string, key: keyof typeof TRANSLATIONS['en-IN'], fallback: string): string {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['en-IN'];
@@ -18,9 +19,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Profile is required' }, { status: 400 });
     }
 
+    // Fetch schemes from the database (PostgreSQL parses JSON fields automatically)
+    const dbSchemes = await prisma.scheme.findMany();
+    
+    const schemes: Scheme[] = dbSchemes.map((s: any) => ({
+      ...s,
+      applicable_states: s.applicable_states as string[],
+      required_documents: s.required_documents as string[],
+      tags: s.tags as string[],
+      target_occupations: s.target_occupations as string[],
+    }));
+
     const matches = [];
 
-    for (const scheme of mockSchemes) {
+    for (const scheme of schemes) {
       const reasons: string[] = [];
       let isEligible = true;
 
