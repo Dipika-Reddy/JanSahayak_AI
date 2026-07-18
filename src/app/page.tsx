@@ -10,6 +10,7 @@ export default function LandingPage() {
   const [selectedLang, setSelectedLang] = useState('en-IN');
   const [dynamicTranslations, setDynamicTranslations] = useState<Record<string, string>>({});
   const [isTranslating, setIsTranslating] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const LANDING_KEYS = [
     'tryLiveDemo',
@@ -113,13 +114,36 @@ export default function LandingPage() {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-3">
+
+            {/* Logo */}
+            <div className="flex items-center gap-3 flex-shrink-0">
               <div className="bg-gradient-to-br from-blue-500 to-blue-800 p-1.5 rounded-xl shadow-[0_4px_15px_rgba(37,99,235,0.4)]">
                 <Globe className="w-5 h-5 text-white" />
               </div>
               <span className="font-extrabold text-xl tracking-tight text-white">JanSahayak<span className="text-blue-400">.AI</span></span>
             </div>
-            
+
+            {/* Desktop Nav Links */}
+            <nav className="hidden md:flex items-center gap-1">
+              {[
+                { label: 'Home', href: '#hero' },
+                { label: 'Impact Map', href: '#impact-map' },
+                { label: 'Why JanSahayak', href: '#why' },
+                { label: 'Architecture', href: '#architecture' },
+                { label: 'How It Works', href: '#how-it-works' },
+              ].map(link => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="px-4 py-2 rounded-full text-sm font-medium text-slate-300 hover:text-white hover:bg-blue-800/30 transition-all"
+                >
+                  {link.label}
+                </a>
+              ))}
+            </nav>
+
+            {/* Right side: lang picker + CTA + mobile hamburger */}
             <div className="flex items-center gap-3">
               <select 
                 value={selectedLang}
@@ -130,23 +154,67 @@ export default function LandingPage() {
                   <option key={l.code} value={l.code} className="bg-slate-900 text-slate-100">{l.label}</option>
                 ))}
               </select>
-            </div>
 
-            <div className="flex items-center">
               <Link 
                 href={`/demo?lang=${selectedLang}`}
-                className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-blue-800 px-5 py-2.5 text-sm font-bold text-white shadow-[0_4px_20px_rgba(37,99,235,0.35)] hover:shadow-[0_4px_30px_rgba(37,99,235,0.55)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 transition-all hover:scale-105 active:scale-95"
+                className="hidden sm:inline-flex items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-blue-800 px-5 py-2.5 text-sm font-bold text-white shadow-[0_4px_20px_rgba(37,99,235,0.35)] hover:shadow-[0_4px_30px_rgba(37,99,235,0.55)] transition-all hover:scale-105 active:scale-95"
               >
                 {t.tryLiveDemo}
               </Link>
+
+              {/* Mobile hamburger */}
+              <button
+                className="md:hidden flex flex-col gap-1.5 p-2 rounded-lg hover:bg-blue-900/30 transition-colors"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                aria-label="Toggle menu"
+              >
+                <span className={`block w-5 h-0.5 bg-slate-300 transition-all duration-300 ${mobileMenuOpen ? 'rotate-45 translate-y-2' : ''}`} />
+                <span className={`block w-5 h-0.5 bg-slate-300 transition-all duration-300 ${mobileMenuOpen ? 'opacity-0' : ''}`} />
+                <span className={`block w-5 h-0.5 bg-slate-300 transition-all duration-300 ${mobileMenuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
+              </button>
             </div>
           </div>
+
+          {/* Mobile dropdown menu */}
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="md:hidden py-4 border-t border-blue-900/30 flex flex-col gap-1"
+            >
+              {[
+                { label: 'Home', href: '#hero' },
+                { label: 'Impact Map', href: '#impact-map' },
+                { label: 'Why JanSahayak', href: '#why' },
+                { label: 'Architecture', href: '#architecture' },
+                { label: 'How It Works', href: '#how-it-works' },
+              ].map(link => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-blue-800/30 transition-all"
+                >
+                  {link.label}
+                </a>
+              ))}
+              <Link
+                href={`/demo?lang=${selectedLang}`}
+                onClick={() => setMobileMenuOpen(false)}
+                className="mt-2 w-full text-center rounded-full bg-gradient-to-r from-blue-600 to-blue-800 px-5 py-2.5 text-sm font-bold text-white shadow-[0_4px_20px_rgba(37,99,235,0.3)] transition-all"
+              >
+                {t.tryLiveDemo}
+              </Link>
+            </motion.div>
+          )}
         </div>
       </motion.nav>
 
       <main>
         {/* Hero Section */}
-        <section className="relative pt-10 pb-16 overflow-hidden">
+        <section id="hero" className="relative pt-10 pb-16 overflow-hidden">
           {/* Animated Background Mesh */}
           <motion.div 
             style={{ y: yBg }}
@@ -281,7 +349,7 @@ export default function LandingPage() {
         </section>
 
         {/* Impact Map Section */}
-        <section className="py-24 bg-[#0a1225] border-y border-blue-900/30 relative overflow-hidden">
+        <section id="impact-map" className="py-24 bg-[#0a1225] border-y border-blue-900/30 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-[#080E1C] via-transparent to-[#080E1C] z-10 pointer-events-none" />
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20">
             <motion.div 
@@ -351,7 +419,7 @@ export default function LandingPage() {
         </section>
 
         {/* Stats / Value Prop Section */}
-        <section className="py-24 bg-blue-950/10 border-y border-blue-900/20 relative">
+        <section id="why" className="py-24 bg-blue-950/10 border-y border-blue-900/20 relative">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
@@ -419,7 +487,7 @@ export default function LandingPage() {
         </section>
 
         {/* Project Mind Map Section (Moved Above How It Works) */}
-        <section className="py-24 bg-[#080E1C] border-t border-blue-900/30 relative overflow-hidden">
+        <section id="architecture" className="py-24 bg-[#080E1C] border-t border-blue-900/30 relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/10 via-[#080E1C] to-[#080E1C] pointer-events-none" />
           
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
