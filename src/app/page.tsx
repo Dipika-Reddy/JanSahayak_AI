@@ -110,7 +110,7 @@ export default function LandingPage() {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="sticky top-0 z-50 w-full border-b border-blue-900/40 bg-[#080E1C]/85 backdrop-blur-xl"
+        className="fixed top-0 left-0 right-0 z-50 w-full border-b border-blue-900/40 bg-[#080E1C]/85 backdrop-blur-xl"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -211,6 +211,9 @@ export default function LandingPage() {
           )}
         </div>
       </motion.nav>
+
+      {/* Spacer to push content down when navigation is fixed */}
+      <div className="h-16 w-full shrink-0"></div>
 
       <main>
         {/* Hero Section */}
