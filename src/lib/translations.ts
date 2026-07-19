@@ -78,7 +78,14 @@ export const TRANSLATIONS: Record<string, any> = {
     step2Desc: 'Our Gemini-powered engine instantly extracts key demographic and socio-economic data points from the spoken audio.',
     step3Title: 'Smart Matching',
     step3Desc: 'The platform cross-references the profile against a database of government schemes and provides highly accurate eligibility results.',
-    tryYourself: 'Try it yourself now'
+    tryYourself: 'Try it yourself now',
+    // Pagination
+    Showing: 'Showing',
+    of: 'of',
+    schemes: 'schemes',
+    Page: 'Page',
+    Previous: 'Previous',
+    Next: 'Next'
   },
   'hi-IN': {
     title: 'सरकारी योजनाएं आसानी से खोजें',
@@ -131,7 +138,14 @@ export const TRANSLATIONS: Record<string, any> = {
     step2Desc: 'हमारा जेमिनी-संचालित इंजन बोले गए ऑडियो से प्रमुख जनसांख्यिकीय और सामाजिक-आर्थिक डेटा बिंदुओं को तुरंत निकालता है।',
     step3Title: 'स्मार्ट मिलान',
     step3Desc: 'मंच सरकारी योजनाओं के डेटाबेस के खिलाफ प्रोफ़ाइल का क्रॉस-रेफरेंस करता है और अत्यधिक सटीक पात्रता परिणाम प्रदान करता है।',
-    tryYourself: 'इसे अभी स्वयं आज़माएं'
+    tryYourself: 'इसे अभी स्वयं आज़माएं',
+    // Pagination
+    Showing: 'दिखाया जा रहा है',
+    of: 'में से',
+    schemes: 'योजनाएं',
+    Page: 'पृष्ठ',
+    Previous: 'पिछला',
+    Next: 'अगला'
   },
   'te-IN': {
     title: 'ప్రభుత్వ పథకాలను సులభంగా కనుగొనండి',
@@ -184,7 +198,14 @@ export const TRANSLATIONS: Record<string, any> = {
     step2Desc: 'మా జెమిని-ఆధారిత ఇంజిన్ మాట్లాడే ఆడియో నుండి కీలకమైన జనాభా మరియు సామాజిక-ఆర్థిక డేటా పాయింట్లను తక్షణమే సంగ్రహిస్తుంది.',
     step3Title: 'స్మార్ట్ మ్యాచింగ్',
     step3Desc: 'ప్లాట్‌ఫారమ్ ప్రభుత్వ పథకాల డేటాబేస్‌కు వ్యతిరేకంగా ప్రొఫైల్‌ను క్రాస్-రిఫరెన్స్ చేస్తుంది మరియు అత్యంత ఖచ్చితమైన అర్హత ఫలితాలను అందిస్తుంది.',
-    tryYourself: 'దీన్ని ఇప్పుడే మీరే ప్రయత్నించండి'
+    tryYourself: 'దీన్ని ఇప్పుడే మీరే ప్రయత్నించండి',
+    // Pagination
+    Showing: 'చూపిస్తున్నాము',
+    of: 'లో',
+    schemes: 'పథకాలు',
+    Page: 'పేజీ',
+    Previous: 'మునుపటి',
+    Next: 'తరువాత'
   },
   'ta-IN': {
     title: 'அரசு திட்டங்களை எளிதாகக் கண்டறியுங்கள்',
@@ -237,7 +258,14 @@ export const TRANSLATIONS: Record<string, any> = {
     step2Desc: 'எங்கள் ஜெமினி மூலம் இயங்கும் இயந்திரம் பேசப்பட்ட ஆடியோவிலிருந்து முக்கிய புள்ளிவிவர மற்றும் சமூக-பொருளாதார தரவு புள்ளிகளை உடனடியாகப் பிரித்தெடுக்கிறது.',
     step3Title: 'ஸ்மார்ட் மேட்சிங்',
     step3Desc: 'அரசு திட்டங்களின் தரவுத்தளத்திற்கு எதிராக சுயவிவரத்தை தளம் குறுக்கு-குறிப்பிடுகிறது மற்றும் மிகவும் துல்லியமான தகுதி முடிவுகளை வழங்குகிறது.',
-    tryYourself: 'இப்போது நீங்களே முயற்சிக்கவும்'
+    tryYourself: 'இப்போது நீங்களே முயற்சிக்கவும்',
+    // Pagination
+    Showing: 'காண்பிக்கிறது',
+    of: 'இல்',
+    schemes: 'திட்டங்கள்',
+    Page: 'பக்கம்',
+    Previous: 'முந்தைய',
+    Next: 'அடுத்தது'
   },
   'mr-IN': {
     home: 'मुख्यपृष्ठ',
