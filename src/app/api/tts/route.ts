@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { textToSpeechWithSarvam } from '@/services/sarvam/ttsService';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -7,6 +8,21 @@ export async function GET(request: Request) {
 
   if (!text || !lang) {
     return NextResponse.json({ error: 'Missing text or lang' }, { status: 400 });
+  }
+
+  // Try Sarvam AI Text-to-Speech first
+  try {
+    const audioBuffer = await textToSpeechWithSarvam({ text, lang });
+    if (audioBuffer) {
+      return new NextResponse(new Uint8Array(audioBuffer), {
+        headers: {
+          'Content-Type': 'audio/wav',
+          'Cache-Control': 'public, max-age=3600',
+        },
+      });
+    }
+  } catch (sarvamErr) {
+    console.warn('[TTS API] Sarvam TTS failed, falling back to Google TTS:', sarvamErr);
   }
 
   try {

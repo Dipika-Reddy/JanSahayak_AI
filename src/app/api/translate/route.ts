@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { generateContentWithRetry } from '@/lib/gemini-utils';
+import { translateTextWithSarvam, translateTextsWithSarvam } from '@/services/sarvam/translationService';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
@@ -23,7 +24,7 @@ export async function POST(req: Request) {
   let requestPayload: any = {};
   try {
     requestPayload = await req.json();
-    const { text, texts, targetLang } = requestPayload;
+    const { text, texts, targetLang, sourceLang = 'en-IN' } = requestPayload;
 
     if (!targetLang) {
       return NextResponse.json({ error: 'targetLang is required' }, { status: 400 });
@@ -35,6 +36,16 @@ export async function POST(req: Request) {
     if (texts && Array.isArray(texts)) {
       if (texts.length === 0) {
         return NextResponse.json({ translations: {} });
+      }
+
+      // Try Sarvam AI first for batch translation
+      try {
+        const sarvamTranslations = await translateTextsWithSarvam(texts, sourceLang, targetLang);
+        if (sarvamTranslations) {
+          return NextResponse.json({ translations: sarvamTranslations });
+        }
+      } catch (sarvamErr) {
+        console.warn("Sarvam batch translation failed, falling back to Gemini/Google:", sarvamErr);
       }
 
       // Try Gemini first for minority languages (Bodo, Kashmiri, Manipuri)
@@ -103,6 +114,16 @@ export async function POST(req: Request) {
 
     if (!text) {
       return NextResponse.json({ error: 'Text or texts is required' }, { status: 400 });
+    }
+
+    // Try Sarvam AI first for single text translation
+    try {
+      const sarvamTranslation = await translateTextWithSarvam({ text, sourceLang, targetLang });
+      if (sarvamTranslation) {
+        return NextResponse.json({ translatedText: sarvamTranslation });
+      }
+    } catch (sarvamErr) {
+      console.warn("Sarvam single translation failed, falling back to Gemini/Google:", sarvamErr);
     }
 
     // Single string translation

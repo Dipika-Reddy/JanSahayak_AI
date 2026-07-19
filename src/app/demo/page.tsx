@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { SUPPORTED_LANGUAGES, TRANSLATIONS } from "@/lib/translations";
-import { useVoiceRecognition } from "@/hooks/useVoiceRecognition";
+import { useVoiceConversation } from "@/hooks/useVoiceConversation";
 import { voiceManager } from "@/lib/voice-manager";
 
 // --- Clean HTML helper ---
@@ -175,11 +175,16 @@ function VoiceInterfaceContent() {
     transcript,
     setTranscript,
     startListening,
-    stopListening
-  } = useVoiceRecognition({
+    stopListening,
+    submitListening,
+    isProcessing: isSarvamProcessing
+  } = useVoiceConversation({
     lang: currentLang,
-    onAutoSubmit: handleSubmit,
-    silenceTimeoutMs: 5000
+    onLanguageDetected: (detectedLang) => {
+      setCurrentLang(detectedLang);
+      window.history.replaceState(null, '', `?lang=${detectedLang}`);
+    },
+    onSubmit: handleSubmit
   });
 
   const isListening = recognitionState === 'LISTENING';
@@ -347,9 +352,9 @@ function VoiceInterfaceContent() {
   };
 
   const handleManualSubmit = () => {
-    if (transcript.trim()) {
-      // Stop mic first so it doesn't pick up the AI's spoken response
-      if (isListening) stopListening();
+    if (isListening) {
+      submitListening();
+    } else if (transcript.trim()) {
       setRecognitionState('PROCESSING');
       handleSubmit(transcript);
     }
