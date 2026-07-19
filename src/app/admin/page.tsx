@@ -203,7 +203,7 @@ export default function AdminPage() {
     setCurrentPage(1);
   }, [searchQuery, categoryFilter]);
 
-  const itemsPerPage = 10;
+  const itemsPerPage = 100;
   const totalPages = Math.ceil(filteredSchemes.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const visibleSchemes = filteredSchemes.slice(startIndex, startIndex + itemsPerPage);
@@ -300,9 +300,9 @@ export default function AdminPage() {
         </div>
 
         {/* Search, Filter & Actions Row */}
-        <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-6 bg-slate-900/40 p-4 border border-slate-850 rounded-2xl">
-          <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto flex-1 md:items-center">
-            <div className="relative flex-1 max-w-md">
+        <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-6 bg-slate-900/40 p-4 border border-slate-800 rounded-2xl">
+          <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto md:items-center">
+            <div className="relative w-full md:w-96">
               <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-3.5" />
               <input 
                 type="text"
@@ -313,11 +313,11 @@ export default function AdminPage() {
               />
             </div>
             
-            <div className="relative">
+            <div className="relative w-full md:w-64">
               <select
                 value={categoryFilter}
                 onChange={e => setCategoryFilter(e.target.value)}
-                className="bg-slate-900 border border-slate-800 px-4 py-2.5 rounded-xl text-sm text-zinc-300 focus:outline-none focus:border-cyan-500/50 cursor-pointer w-full md:w-auto"
+                className="bg-slate-900 border border-slate-800 px-4 py-2.5 rounded-xl text-sm text-zinc-300 focus:outline-none focus:border-cyan-500/50 cursor-pointer w-full"
               >
                 <option value="All">All Categories</option>
                 {categories.map(c => (
@@ -329,7 +329,7 @@ export default function AdminPage() {
 
           <button 
             onClick={handleOpenAddModal}
-            className="w-full md:w-auto px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 hover:scale-105 active:scale-95 transition-all text-white font-semibold rounded-xl text-sm flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(6,182,212,0.3)]"
+            className="w-full md:w-auto shrink-0 px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 hover:scale-105 active:scale-95 transition-all text-white font-semibold rounded-xl text-sm flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(6,182,212,0.3)]"
           >
             <Plus className="w-4 h-4" />
             Add New Scheme

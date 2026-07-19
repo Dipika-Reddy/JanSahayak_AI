@@ -66,7 +66,7 @@ export function Pagination({
           size="icon"
           onClick={() => onPageChange(1)}
           disabled={currentPage === 1}
-          className="h-9 w-9 rounded-xl border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500"
+          className="h-9 w-9 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50"
           aria-label="First page"
         >
           <ChevronsLeft className="w-4 h-4" />
@@ -78,7 +78,7 @@ export function Pagination({
           size="sm"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="h-9 gap-1 rounded-xl border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 px-3"
+          className="h-9 gap-1 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 px-3 disabled:opacity-50"
           aria-label="Previous page"
         >
           <ChevronLeft className="w-4 h-4" />
@@ -97,7 +97,7 @@ export function Pagination({
             className={`h-9 w-9 rounded-xl transition-all duration-200 focus-visible:ring-2 focus-visible:ring-blue-500 font-semibold ${
               currentPage === page
                 ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20 scale-105'
-                : 'border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800'
+                : 'border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800'
             }`}
             aria-current={currentPage === page ? 'page' : undefined}
           >
@@ -111,7 +111,7 @@ export function Pagination({
           size="sm"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="h-9 gap-1 rounded-xl border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 px-3"
+          className="h-9 gap-1 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 px-3 disabled:opacity-50"
           aria-label="Next page"
         >
           <span className="hidden sm:inline">
@@ -126,7 +126,7 @@ export function Pagination({
           size="icon"
           onClick={() => onPageChange(totalPages)}
           disabled={currentPage === totalPages}
-          className="h-9 w-9 rounded-xl border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500"
+          className="h-9 w-9 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50"
           aria-label="Last page"
         >
           <ChevronsRight className="w-4 h-4" />
