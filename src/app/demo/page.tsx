@@ -36,20 +36,67 @@ function VoiceInterfaceContent() {
   const [dynamicTranslations, setDynamicTranslations] = useState<Record<string, string>>({});
   const [isTranslating, setIsTranslating] = useState(false);
 
+  const [profile, setProfile] = useState<any>(null);
+  const [results, setResults] = useState<any[] | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [messages, setMessages] = useState<{role: 'user' | 'assistant', content: string}[]>([]);
+  const [speakingScheme, setSpeakingScheme] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentReadIndex, setCurrentReadIndex] = useState(-1);
+
+  const lastTranslatedLangRef = useRef('en-IN');
+
   // Initialize and synchronize language from searchParams or localStorage
   useEffect(() => {
     const saved = localStorage.getItem('user-lang');
     const targetLang = langQuery || saved || 'en-IN';
     setCurrentLang(targetLang);
+    lastTranslatedLangRef.current = targetLang;
     if (targetLang) {
       localStorage.setItem('user-lang', targetLang);
     }
   }, [langQuery]);
 
-  // Synchronize localStorage when currentLang changes from dropdown
+  // Synchronize localStorage and translate active session content when currentLang changes
   useEffect(() => {
     localStorage.setItem('user-lang', currentLang);
-  }, [currentLang]);
+
+    if (lastTranslatedLangRef.current !== currentLang) {
+      lastTranslatedLangRef.current = currentLang;
+
+      if (profile && results) {
+        runSchemeMatching(profile, currentLang);
+      }
+
+      if (messages.length > 0) {
+        const translateHistory = async () => {
+          try {
+            const assistantMessages = messages.filter(m => m.role === 'assistant');
+            if (assistantMessages.length === 0) return;
+            const uniqueTexts = Array.from(new Set(assistantMessages.map(m => m.content)));
+            
+            const res = await fetch('/api/translate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ texts: uniqueTexts, targetLang: currentLang })
+            });
+            const data = await res.json();
+            if (data.translations) {
+              setMessages(prev => prev.map(m => {
+                if (m.role === 'assistant' && data.translations[m.content]) {
+                  return { ...m, content: data.translations[m.content] };
+                }
+                return m;
+              }));
+            }
+          } catch (e) {
+            console.error("Failed to translate chat history:", e);
+          }
+        };
+        translateHistory();
+      }
+    }
+  }, [currentLang, profile, results, messages]);
 
   // List of all UI strings to translate dynamically
   const UI_STRINGS = [
@@ -176,15 +223,6 @@ function VoiceInterfaceContent() {
 
     return <>{stringMap[children] || children}</>;
   };
-  const [profile, setProfile] = useState<any>(null);
-  const [results, setResults] = useState<any[] | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  
-  const [messages, setMessages] = useState<{role: 'user' | 'assistant', content: string}[]>([]);
-  
-  const [speakingScheme, setSpeakingScheme] = useState<string | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentReadIndex, setCurrentReadIndex] = useState(-1);
 
   const handleSubmit = async (overrideText: string) => {
     const textToSubmit = overrideText.trim();
