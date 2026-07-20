@@ -674,9 +674,9 @@ export default function LandingPage() {
                   </h4>
                   <ul className="text-sm text-slate-400 space-y-2">
                     <li>• Next.js & Tailwind CSS</li>
-                    <li>• Node.js & Supabase</li>
-                    <li>• Google Gemini AI</li>
-                    <li>• Web Speech API</li>
+                    <li>• Supabase DB & Cache</li>
+                    <li>• Google Gemini & Sarvam AI</li>
+                    <li>• MyScheme Platform Integration</li>
                   </ul>
                 </motion.div>
               </div>
@@ -830,19 +830,31 @@ export default function LandingPage() {
                 <div className="space-y-4">
                   <div className="bg-blue-950/30 p-5 rounded-2xl border border-blue-900/30 flex justify-between items-center group hover:border-blue-600/40 transition-colors">
                     <span className="font-semibold text-slate-300">Frontend Interface</span>
-                    <span className="text-xs bg-blue-900/30 text-blue-300 px-3 py-1.5 rounded-lg font-bold group-hover:bg-blue-600/20 group-hover:text-blue-200 transition-colors">Next.js + Tailwind</span>
+                    <span className="text-xs bg-blue-900/30 text-blue-300 px-3 py-1.5 rounded-lg font-bold group-hover:bg-blue-600/20 group-hover:text-blue-200 transition-colors">Next.js + React + Tailwind CSS</span>
                   </div>
                   <div className="bg-blue-950/30 p-5 rounded-2xl border border-blue-900/30 flex justify-between items-center group hover:border-indigo-600/40 transition-colors">
-                    <span className="font-semibold text-slate-300">Voice Recognition</span>
-                    <span className="text-xs bg-blue-900/30 text-blue-300 px-3 py-1.5 rounded-lg font-bold group-hover:bg-indigo-600/20 group-hover:text-indigo-200 transition-colors">Web Speech API</span>
+                    <span className="font-semibold text-slate-300">Voice & Language Layer</span>
+                    <span className="text-xs bg-blue-900/30 text-blue-300 px-3 py-1.5 rounded-lg font-bold group-hover:bg-indigo-600/20 group-hover:text-indigo-200 transition-colors">Sarvam AI</span>
                   </div>
                   <div className="bg-blue-950/30 p-5 rounded-2xl border border-blue-900/30 flex justify-between items-center group hover:border-blue-500/40 transition-colors">
                     <span className="font-semibold text-slate-300">Intelligence Engine</span>
                     <span className="text-xs bg-blue-900/30 text-blue-300 px-3 py-1.5 rounded-lg font-bold group-hover:bg-blue-600/20 group-hover:text-blue-200 transition-colors">Google Gemini</span>
                   </div>
                   <div className="bg-blue-950/30 p-5 rounded-2xl border border-blue-900/30 flex justify-between items-center group hover:border-blue-400/40 transition-colors">
-                    <span className="font-semibold text-slate-300">Scheme Database</span>
-                    <span className="text-xs bg-blue-900/30 text-blue-300 px-3 py-1.5 rounded-lg font-bold group-hover:bg-blue-500/20 group-hover:text-blue-100 transition-colors">JSON DB</span>
+                    <span className="font-semibold text-slate-300">Eligibility Engine</span>
+                    <span className="text-xs bg-blue-900/30 text-blue-300 px-3 py-1.5 rounded-lg font-bold group-hover:bg-blue-500/20 group-hover:text-blue-100 transition-colors">AI + Rule-Based Matching</span>
+                  </div>
+                  <div className="bg-blue-950/30 p-5 rounded-2xl border border-blue-900/30 flex justify-between items-center group hover:border-blue-300/40 transition-colors">
+                    <span className="font-semibold text-slate-300">Scheme Data Source</span>
+                    <span className="text-xs bg-blue-900/30 text-blue-300 px-3 py-1.5 rounded-lg font-bold group-hover:bg-blue-600/20 group-hover:text-blue-200 transition-colors">Official MyScheme Platform</span>
+                  </div>
+                  <div className="bg-blue-950/30 p-5 rounded-2xl border border-blue-900/30 flex justify-between items-center group hover:border-blue-200/40 transition-colors">
+                    <span className="font-semibold text-slate-300">Backend Services</span>
+                    <span className="text-xs bg-blue-900/30 text-blue-300 px-3 py-1.5 rounded-lg font-bold group-hover:bg-blue-600/20 group-hover:text-blue-200 transition-colors">Next.js API Routes + Node.js</span>
+                  </div>
+                  <div className="bg-blue-950/30 p-5 rounded-2xl border border-blue-900/30 flex justify-between items-center group hover:border-blue-100/40 transition-colors">
+                    <span className="font-semibold text-slate-300">Database / Cache</span>
+                    <span className="text-xs bg-blue-900/30 text-blue-300 px-3 py-1.5 rounded-lg font-bold group-hover:bg-blue-500/20 group-hover:text-blue-100 transition-colors">Supabase PostgreSQL + Cache</span>
                   </div>
                 </div>
               </motion.div>
