@@ -12,6 +12,17 @@ export default function LandingPage() {
   const [isTranslating, setIsTranslating] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  useEffect(() => {
+    const saved = localStorage.getItem('user-lang');
+    if (saved) {
+      setSelectedLang(saved);
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('user-lang', selectedLang);
+  }, [selectedLang]);
+
   const LANDING_KEYS = [
     'tryLiveDemo',
     'heroTag',

@@ -28,13 +28,28 @@ const cleanHtmlText = (text: string): string => {
 
 function VoiceInterfaceContent() {
   const searchParams = useSearchParams();
-  const langQuery = searchParams.get('lang') || 'en-IN';
+  const langQuery = searchParams.get('lang');
   
-  const [currentLang, setCurrentLang] = useState(langQuery);
+  const [currentLang, setCurrentLang] = useState('en-IN');
   const [processingState, setProcessingState] = useState("");
   
   const [dynamicTranslations, setDynamicTranslations] = useState<Record<string, string>>({});
   const [isTranslating, setIsTranslating] = useState(false);
+
+  // Initialize and synchronize language from searchParams or localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('user-lang');
+    const targetLang = langQuery || saved || 'en-IN';
+    setCurrentLang(targetLang);
+    if (targetLang) {
+      localStorage.setItem('user-lang', targetLang);
+    }
+  }, [langQuery]);
+
+  // Synchronize localStorage when currentLang changes from dropdown
+  useEffect(() => {
+    localStorage.setItem('user-lang', currentLang);
+  }, [currentLang]);
 
   // List of all UI strings to translate dynamically
   const UI_STRINGS = [
@@ -118,12 +133,13 @@ function VoiceInterfaceContent() {
   }, [currentLang]);
 
   // Local Translate component
-  const T = ({ children, lang }: { children: string, lang: string }) => {
+  const T = ({ children, lang }: { children: string, lang?: string | null }) => {
+    const targetLang = currentLang; // Force translations to follow active selection
     if (dynamicTranslations[children]) {
       return <>{dynamicTranslations[children]}</>;
     }
 
-    const t = TRANSLATIONS[lang] || TRANSLATIONS['en-IN'];
+    const t = TRANSLATIONS[targetLang] || TRANSLATIONS['en-IN'];
     
     const stringMap: Record<string, string> = {
       'Home': t.home,
@@ -657,7 +673,7 @@ function VoiceInterfaceContent() {
             playTTS={playTTS}
             getTranslatedLink={getTranslatedLink}
             cleanHtmlText={cleanHtmlText}
-            langQuery={langQuery}
+            langQuery={currentLang}
             T={T}
             currentPage={currentPage}
             setCurrentPage={setCurrentPage}
