@@ -59,7 +59,7 @@ export async function POST(req: Request) {
           ${JSON.stringify(texts, null, 2)}`;
 
           let response = await generateContentWithRetry(prompt, {
-            model: "gemini-2.5-flash-lite",
+            model: "gemini-1.5-flash",
           });
 
           response = response.trim();
@@ -95,7 +95,7 @@ export async function POST(req: Request) {
           ${JSON.stringify(texts, null, 2)}`;
 
           let response = await generateContentWithRetry(prompt, {
-            model: "gemini-2.5-flash-lite",
+            model: "gemini-1.5-flash",
           });
 
           response = response.trim();

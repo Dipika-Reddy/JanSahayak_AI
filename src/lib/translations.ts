@@ -85,7 +85,19 @@ export const TRANSLATIONS: Record<string, any> = {
     schemes: 'schemes',
     Page: 'Page',
     Previous: 'Previous',
-    Next: 'Next'
+    Next: 'Next',
+    // SchemeCard strings
+    schemeSuffix: 'Scheme',
+    showMore: 'Show more',
+    showLess: 'Show less',
+    searchPortal: 'Search Official Portal',
+    offlineApplication: 'Offline Application:',
+    nearestOffice: 'Nearest Office:',
+    visitCSC: 'Visit your nearest Common Service Centre (CSC) or District Collectorate for application assistance.',
+    // SchemeList strings
+    foundForProfile: 'found for your profile',
+    readAloud: 'Read scheme aloud',
+    tryMoreDetails: 'Try providing more details like your age, income, occupation, or state to get better results.'
   },
   'hi-IN': {
     title: 'सरकारी योजनाएं आसानी से खोजें',
@@ -145,7 +157,19 @@ export const TRANSLATIONS: Record<string, any> = {
     schemes: 'योजनाएं',
     Page: 'पृष्ठ',
     Previous: 'पिछला',
-    Next: 'अगला'
+    Next: 'अगला',
+    // SchemeCard strings
+    schemeSuffix: 'योजना',
+    showMore: 'और दिखाएं',
+    showLess: 'कम दिखाएं',
+    searchPortal: 'आधिकारिक पोर्टल खोजें',
+    offlineApplication: 'ऑफलाइन आवेदन:',
+    nearestOffice: 'निकटतम कार्यालय:',
+    visitCSC: 'आवेदन सहायता के लिए अपने निकटतम कॉमन सर्विस सेंटर (CSC) या जिला कलेक्टरेट पर जाएं।',
+    // SchemeList strings
+    foundForProfile: 'आपकी प्रोफ़ाइल के लिए मिलीं',
+    readAloud: 'योजना जोर से पढ़ें',
+    tryMoreDetails: 'बेहतर परिणामों के लिए अपनी उम्र, आय, पेशा या राज्य जैसे अधिक विवरण प्रदान करने का प्रयास करें।'
   },
   'te-IN': {
     title: 'ప్రభుత్వ పథకాలను సులభంగా కనుగొనండి',
@@ -205,7 +229,19 @@ export const TRANSLATIONS: Record<string, any> = {
     schemes: 'పథకాలు',
     Page: 'పేజీ',
     Previous: 'మునుపటి',
-    Next: 'తరువాత'
+    Next: 'తరువాత',
+    // SchemeCard strings
+    schemeSuffix: 'పథకం',
+    showMore: 'మరిన్ని చూపించు',
+    showLess: 'తక్కువ చూపించు',
+    searchPortal: 'అధికారిక పోర్టల్ శోధించండి',
+    offlineApplication: 'ఆఫ్‌లైన్ దరఖాస్తు:',
+    nearestOffice: 'సమీప కార్యాలయం:',
+    visitCSC: 'దరఖాస్తు సహాయం కోసం మీ సమీపంలోని కామన్ సర్వీస్ సెంటర్ (CSC) లేదా జిల్లా కలెక్టరేట్‌ను సందర్శించండి.',
+    // SchemeList strings
+    foundForProfile: 'మీ ప్రొఫైల్‌కు కనుగొనబడ్డాయి',
+    readAloud: 'పథకాన్ని గట్టిగా చదవండి',
+    tryMoreDetails: 'మెరుగైన ఫలితాల కోసం మీ వయస్సు, ఆదాయం, వృత్తి లేదా రాష్ట్రం వంటి మరిన్ని వివరాలు అందించండి.'
   },
   'ta-IN': {
     title: 'அரசு திட்டங்களை எளிதாகக் கண்டறியுங்கள்',
@@ -265,7 +301,19 @@ export const TRANSLATIONS: Record<string, any> = {
     schemes: 'திட்டங்கள்',
     Page: 'பக்கம்',
     Previous: 'முந்தைய',
-    Next: 'அடுத்தது'
+    Next: 'அடுத்தது',
+    // SchemeCard strings
+    schemeSuffix: 'திட்டம்',
+    showMore: 'மேலும் காட்டு',
+    showLess: 'குறைவாக காட்டு',
+    searchPortal: 'அதிகாரப்பூர்வ போர்டல் தேடுங்கள்',
+    offlineApplication: 'ஆஃப்லைன் விண்ணப்பம்:',
+    nearestOffice: 'அருகிலுள்ள அலுவலகம்:',
+    visitCSC: 'விண்ணப்ப உதவிக்கு உங்கள் அருகிலுள்ள பொது சேவை மையம் (CSC) அல்லது மாவட்ட ஆட்சியரகம் செல்லவும்.',
+    // SchemeList strings
+    foundForProfile: 'உங்கள் சுயவிவரத்திற்கு கண்டறியப்பட்டது',
+    readAloud: 'திட்டத்தை சத்தமாக படியுங்கள்',
+    tryMoreDetails: 'சிறந்த முடிவுகளுக்கு உங்கள் வயது, வருமானம், தொழில் அல்லது மாநிலம் போன்ற கூடுதல் விவரங்களை வழங்க முயற்சிக்கவும்.'
   },
   'mr-IN': {
     home: 'मुख्यपृष्ठ',

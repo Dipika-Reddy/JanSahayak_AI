@@ -5,8 +5,10 @@ import { generateContentWithRetry } from '@/lib/gemini-utils';
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 export async function POST(req: Request) {
+  let transcript = '';
   try {
-    const { transcript } = await req.json();
+    const body = await req.json();
+    transcript = body.transcript || '';
 
     if (!transcript) {
       return NextResponse.json({ error: 'Transcript is required' }, { status: 400 });
@@ -24,7 +26,7 @@ export async function POST(req: Request) {
     `;
 
     let text = await generateContentWithRetry(prompt, {
-      model: "gemini-2.5-flash",
+      model: "gemini-1.5-flash",
       generationConfig: { responseMimeType: "application/json" }
     });
     
@@ -51,15 +53,38 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ profile, detectedLanguage });
   } catch (error) {
-    console.warn('Error in extract-profile API, falling back to mock data:', error);
+    console.warn('Error in extract-profile API, falling back to dynamic parser:', error);
+    
+    // Dynamic rule-based fallback if LLM API is unavailable
+    const lower = (transcript || '').toLowerCase();
+    const fallbackProfile: any = {};
+
+    if (lower.includes('student') || lower.includes('college') || lower.includes('school') || lower.includes('university') || lower.includes('study')) {
+      fallbackProfile.occupation = 'Student';
+      fallbackProfile.student = true;
+    } else if (lower.includes('farmer') || lower.includes('agriculture') || lower.includes('kisan')) {
+      fallbackProfile.occupation = 'Farmer';
+      fallbackProfile.farmer = true;
+    } else if (lower.includes('senior') || lower.includes('elderly') || lower.includes('old age')) {
+      fallbackProfile.seniorCitizen = true;
+    } else if (lower.includes('pregnant') || lower.includes('maternity')) {
+      fallbackProfile.pregnant = true;
+    }
+
+    const stateList = [
+      'Telangana', 'Andhra Pradesh', 'Karnataka', 'Tamil Nadu', 'Kerala', 
+      'Maharashtra', 'Gujarat', 'Delhi', 'Uttar Pradesh', 'Bihar', 'Rajasthan', 
+      'Punjab', 'Haryana', 'Madhya Pradesh', 'West Bengal', 'Odisha', 'Assam'
+    ];
+    for (const st of stateList) {
+      if (lower.includes(st.toLowerCase())) {
+        fallbackProfile.state = st;
+        break;
+      }
+    }
+
     return NextResponse.json({ 
-      profile: {
-        age: "35",
-        gender: "Female",
-        occupation: "Farmer",
-        income: "30000",
-        state: "Andhra Pradesh"
-      },
+      profile: fallbackProfile,
       detectedLanguage: "en-IN"
     });
   }
