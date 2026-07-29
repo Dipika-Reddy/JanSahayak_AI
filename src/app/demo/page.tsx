@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, Suspense } from 'react';
-import { Mic, Globe, Volume2, ArrowRight, Loader2, CheckCircle2, FileText, MapPin, Square, Play, Pause, SkipBack, SkipForward, Repeat } from 'lucide-react';
+import { Mic, Globe, Volume2, ArrowRight, Loader2, CheckCircle2, FileText, MapPin, Square, Play, Pause, SkipBack, SkipForward, Repeat, X } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -43,6 +43,7 @@ function VoiceInterfaceContent() {
   const [speakingScheme, setSpeakingScheme] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentReadIndex, setCurrentReadIndex] = useState(-1);
+  const [isVoicePanelOpen, setIsVoicePanelOpen] = useState(true);
 
   const lastTranslatedLangRef = useRef('en-IN');
 
@@ -133,7 +134,16 @@ function VoiceInterfaceContent() {
     'Page',
     'Showing',
     'of',
-    'schemes'
+    'schemes',
+    // SchemeCard/SchemeList additional strings
+    'Scheme',
+    'Show more',
+    'Show less',
+    'Search Official Portal',
+    'Visit your nearest Common Service Centre (CSC) or District Collectorate for application assistance.',
+    'found for your profile',
+    'Read scheme aloud',
+    'Try providing more details like your age, income, occupation, or state to get better results.'
   ];
 
   // Dynamically translate UI when a language other than standard ones is chosen
@@ -268,12 +278,12 @@ function VoiceInterfaceContent() {
     }
   };
 
-  const runSchemeMatching = async (currentProfile: any, langOverride?: string) => {
+  const runSchemeMatching = async (currentProfile: any, langOverride?: string, promptText?: string) => {
     try {
       const matchRes = await fetch("/api/match-schemes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profile: currentProfile, lang: langOverride || currentLang }),
+        body: JSON.stringify({ profile: currentProfile, lang: langOverride || currentLang, promptText }),
       });
       const matchData = await matchRes.json();
       if (matchData.error) throw new Error(matchData.error);
@@ -303,26 +313,35 @@ function VoiceInterfaceContent() {
       setProfile(profileData.profile);
       setProcessingState("Finding matching schemes...");
       
-      const matches = await runSchemeMatching(profileData.profile, targetLang);
+      const matches = await runSchemeMatching(profileData.profile, targetLang, textToSubmit);
       
-      // Build the response text in the selected language
-      const staticT = TRANSLATIONS[targetLang];
-      let respText: string;
-      if (staticT?.foundSchemes1) {
-        // Static translation available (en, hi, te, ta)
-        respText = `${staticT.foundSchemes1}${matches.length}${staticT.foundSchemes2}`;
-      } else {
-        // Dynamically translate for other languages
-        const englishText = `I found ${matches.length} schemes for you. You can ask me to read them or ask follow-up questions.`;
+      // Build dynamic contextual follow-up question strictly obeying priority order
+      let followUpQuestion = '';
+      const p = profileData.profile || {};
+      const hasAge = p.age !== null && p.age !== undefined;
+      const hasIncome = p.income !== null && p.income !== undefined;
+
+      if (!hasAge && !hasIncome) {
+        followUpQuestion = ' To find more accurate schemes, please tell me your age or annual family income.';
+      } else if (!hasIncome) {
+        followUpQuestion = ' To check income eligibility, please share your annual family income.';
+      } else if (!hasAge) {
+        followUpQuestion = ' To confirm age limits, what is your age?';
+      }
+
+      const englishResponse = `I found ${matches.length} schemes matching your profile.${followUpQuestion} Here are your eligible schemes.`;
+      
+      let respText = englishResponse;
+      if (targetLang !== 'en-IN') {
         try {
           const langCode = targetLang.split('-')[0];
           const ttsLang = ['brx', 'ks', 'mni', 'sat', 'doi', 'mai', 'kok'].includes(langCode) ? 'hi' : langCode;
-          const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${ttsLang}&dt=t&q=${encodeURIComponent(englishText)}`;
+          const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${ttsLang}&dt=t&q=${encodeURIComponent(englishResponse)}`;
           const res = await fetch(url);
           const data = await res.json();
-          respText = data?.[0]?.map((x: any) => x[0]).join('') || englishText;
+          respText = data?.[0]?.map((x: any) => x[0]).join('') || englishResponse;
         } catch {
-          respText = `I found ${matches.length} schemes for you. You can ask me to read them or ask follow-up questions.`;
+          respText = englishResponse;
         }
       }
 
@@ -363,21 +382,23 @@ function VoiceInterfaceContent() {
       if (chatData.error) throw new Error(chatData.error);
       
       const { intent, targetSchemeId, acknowledgment, spokenResponse, extractedProfileDiff } = chatData;
+      const displayContent = spokenResponse || acknowledgment || "...";
       
-      // Update UI with short acknowledgment only
-      setMessages([...newMessages, { role: 'assistant', content: acknowledgment || "..." }]);
+      // Update UI with full conversational response
+      setMessages([...newMessages, { role: 'assistant', content: displayContent }]);
       
       // Merge new profile fields if extracted, then update scheme matches
       let activeResults = results || [];
       if (extractedProfileDiff && Object.keys(extractedProfileDiff).length > 0) {
-        const mergedProfile = {
-          ...(profile || {}),
-          ...Object.fromEntries(
-            Object.entries(extractedProfileDiff).filter(([_, v]) => v !== null && v !== undefined)
-          )
-        };
+        const mergedProfile = { ...(profile || {}) };
+        Object.entries(extractedProfileDiff).forEach(([k, v]) => {
+          if (v !== undefined) {
+            mergedProfile[k] = v;
+          }
+        });
         setProfile(mergedProfile);
-        activeResults = await runSchemeMatching(mergedProfile);
+        setProcessingState("Profile updated. Recalculating eligible schemes...");
+        activeResults = await runSchemeMatching(mergedProfile, currentLang, textToSubmit);
       }
 
       // Handle Intents
@@ -630,7 +651,7 @@ function VoiceInterfaceContent() {
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col items-center p-4 sm:p-8 w-full max-w-3xl mx-auto pb-[300px]">
+      <main className={`flex-1 flex flex-col items-center p-4 sm:p-6 w-full mx-auto pb-[300px] ${results ? 'max-w-7xl' : 'max-w-3xl'}`}>
         {!results && !isProcessing && messages.length === 0 && (
           <div className="w-full space-y-8 flex flex-col items-center text-center mt-12">
             <div className="space-y-4">
@@ -711,59 +732,99 @@ function VoiceInterfaceContent() {
             setCurrentPage={setCurrentPage}
           />
         )}
-        {/* Explicit spacer to prevent footer overlap */}
-        <div className="h-64 w-full shrink-0"></div>
 
+        {/* Small bottom padding */}
+        <div className="h-16 w-full shrink-0"></div>
       </main>
 
-      {/* Floating Action Bar / Input */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-lg border-t border-zinc-200 dark:border-zinc-800 flex flex-col items-center">
-        
-        <div className="relative flex justify-center mb-4">
-          {isListening && (
-            <div className="absolute inset-0 bg-blue-100 dark:bg-blue-900/30 rounded-full animate-ping w-24 h-24 m-auto"></div>
-          )}
-          <button
-            onClick={toggleListening}
-            className={`relative z-10 flex items-center justify-center w-16 h-16 rounded-full shadow-lg transition-all transform hover:scale-105 active:scale-95 ${
-              isListening 
-                ? "bg-red-500 text-white shadow-red-500/50" 
-                : "bg-blue-600 text-white shadow-blue-600/50"
-            }`}
-          >
-            <Mic className={`w-8 h-8 ${isListening ? "animate-pulse" : ""}`} />
-          </button>
-        </div>
+      {/* Floating Microphone Action Button (Bottom-Right FAB) */}
+      <button
+        onClick={() => {
+          setIsVoicePanelOpen(!isVoicePanelOpen);
+          if (!isVoicePanelOpen && !isListening) {
+            startListening();
+          }
+        }}
+        aria-label="Toggle Voice Assistant"
+        className={`
+          fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full shadow-2xl transition-all transform hover:scale-105 active:scale-95 cursor-pointer
+          ${isListening
+            ? "bg-red-500 text-white ring-4 ring-red-300 animate-pulse shadow-red-500/50"
+            : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/40"
+          }
+        `}
+      >
+        <Mic className={`w-7 h-7 ${isListening ? "animate-pulse" : ""}`} />
+      </button>
 
-        <div className="text-sm font-medium text-zinc-500 mb-2 h-5">
-          {isListening
-            ? <T lang={langQuery}>Listening... Press ➤ or Enter to submit</T>
-            : <T lang={langQuery}>Tap to speak, or type below</T>}
-        </div>
+      {/* Floating Compact Voice Assistant Modal Panel */}
+      {isVoicePanelOpen && (
+        <div className="fixed bottom-24 right-4 sm:right-8 z-50 w-[92vw] max-w-sm bg-white/95 dark:bg-zinc-900/95 border border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-2xl p-5 backdrop-blur-xl animate-in fade-in slide-in-from-bottom-4">
+          <div className="flex items-center justify-between pb-3 mb-3 border-b border-zinc-100 dark:border-zinc-800">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
+                <Mic className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-zinc-900 dark:text-white">Voice Assistant</h4>
+                <p className="text-[10px] text-zinc-500 font-medium">JanSahayak AI</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsVoicePanelOpen(false)}
+              className="p-1.5 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-600 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
 
-        <div className="w-full max-w-2xl flex items-center gap-3">
-          <Input 
-            value={transcript} 
-            onChange={(e) => setTranscript(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                handleManualSubmit();
-              }
-            }}
-            placeholder="Type your query..." 
-            className="flex-1 text-lg py-6 rounded-full px-6 shadow-sm border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900"
-          />
-          <Button 
-            onClick={() => handleManualSubmit()} 
-            disabled={!transcript.trim() || recognitionState === 'PROCESSING'}
-            size="icon" 
-            className="rounded-full bg-blue-600 hover:bg-blue-700 text-white shrink-0 w-12 h-12"
-          >
-            <ArrowRight className="w-5 h-5" />
-          </Button>
-        </div>
+          <div className="flex flex-col items-center py-2 space-y-3">
+            <div className="relative flex justify-center my-1">
+              {isListening && (
+                <div className="absolute inset-0 bg-blue-100 dark:bg-blue-900/30 rounded-full animate-ping w-16 h-16 m-auto"></div>
+              )}
+              <button
+                onClick={toggleListening}
+                className={`relative z-10 flex items-center justify-center w-14 h-14 rounded-full shadow-md transition-all transform hover:scale-105 active:scale-95 ${
+                  isListening
+                    ? "bg-red-500 text-white shadow-red-500/40"
+                    : "bg-blue-600 text-white shadow-blue-600/40"
+                }`}
+              >
+                <Mic className={`w-7 h-7 ${isListening ? "animate-pulse" : ""}`} />
+              </button>
+            </div>
 
-      </div>
+            <p className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 text-center">
+              {isListening
+                ? <T lang={langQuery}>Listening... Speak now</T>
+                : <T lang={langQuery}>Tap microphone or type query below</T>}
+            </p>
+
+            <div className="w-full flex items-center gap-2 pt-1">
+              <Input
+                value={transcript}
+                onChange={(e) => setTranscript(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleManualSubmit();
+                  }
+                }}
+                placeholder="Type your query..."
+                className="flex-1 text-xs py-2 rounded-xl border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800"
+              />
+              <Button
+                onClick={() => handleManualSubmit()}
+                disabled={!transcript.trim() || recognitionState === 'PROCESSING'}
+                size="icon"
+                className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white shrink-0 w-9 h-9"
+              >
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

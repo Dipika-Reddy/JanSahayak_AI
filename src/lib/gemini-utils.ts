@@ -9,11 +9,12 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 export async function generateContentWithRetry(prompt: string, config: any = {}, maxRetries = 3) {
   let attempt = 0;
   
-  // Try preferred model, fallback to 1.5-flash if all retries fail
+  // Try preferred model, fallback to valid Gemini models if all retries fail
   const modelsToTry = [
-    config.model || "gemini-2.5-flash",
-    "gemini-1.5-pro",
-    "gemini-pro"
+    config.model || "gemini-1.5-flash",
+    "gemini-1.5-flash-8b",
+    "gemini-2.0-flash-exp",
+    "gemini-1.5-pro"
   ];
 
   for (const modelName of modelsToTry) {

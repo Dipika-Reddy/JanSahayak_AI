@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { MySchemeService } from '@/backend/services/myscheme/mySchemeService';
-import { checkEligibility } from '@/backend/services/myscheme/eligibilityMatcher';
+import { checkEligibility, calculateRelevanceScore } from '@/backend/services/myscheme/eligibilityMatcher';
 
 /** 
  * Translates an array of strings to the target language in a single Google Translate batch call.
@@ -18,14 +18,17 @@ async function batchTranslate(texts: string[], lang: string): Promise<Record<str
   const unique = [...new Set(texts.filter(t => t && t.trim()))];
   if (unique.length === 0) return {};
 
-  const delimiter = ' ||| ';
+  // Use a safe delimiter sequence that Google Translate preserves verbatim
+  const delimiter = ' ~~~ ';
+  const delimiterRegex = /\s*~~~\s*/;
   const map: Record<string, string> = {};
 
   // Google Translate URL has a character limit (~4000 chars per request)
   // Split into chunks to be safe
   const CHUNK_CHARS = 3500;
-  let chunk: string[] = [];
-  let chunkLen = 0;
+  const chunks: string[][] = [];
+  let currentChunk: string[] = [];
+  let currentLen = 0;
 
   const translateChunk = async (items: string[]) => {
     const joined = items.join(delimiter);
@@ -34,25 +37,33 @@ async function batchTranslate(texts: string[], lang: string): Promise<Record<str
     if (!res.ok) throw new Error(`Google Translate HTTP ${res.status}`);
     const data = await res.json();
     const translated: string = data?.[0]?.map((x: any) => x[0]).join('') || '';
-    const parts = translated.split(/\s*\|\|\|\s*/);
+    const parts = translated.split(delimiterRegex);
     items.forEach((orig, i) => {
-      map[orig] = parts[i]?.trim() || orig;
+      const val = (parts[i]?.trim() || orig)
+        .replace(/\n+/g, ' ')
+        .replace(/~~~/g, '')
+        .replace(/⟦SEP⟧/g, '')
+        .replace(/\|{2,}/g, '')
+        .replace(/\s{2,}/g, ' ');
+      map[orig] = val;
     });
   };
 
-  try {
-    for (const text of unique) {
-      if (chunkLen + text.length > CHUNK_CHARS && chunk.length > 0) {
-        await translateChunk(chunk);
-        chunk = [];
-        chunkLen = 0;
-      }
-      chunk.push(text);
-      chunkLen += text.length + delimiter.length;
+  for (const text of unique) {
+    if (currentLen + text.length > CHUNK_CHARS && currentChunk.length > 0) {
+      chunks.push(currentChunk);
+      currentChunk = [];
+      currentLen = 0;
     }
-    if (chunk.length > 0) await translateChunk(chunk);
+    currentChunk.push(text);
+    currentLen += text.length + delimiter.length;
+  }
+  if (currentChunk.length > 0) chunks.push(currentChunk);
+
+  try {
+    await Promise.all(chunks.map(c => translateChunk(c)));
   } catch (e) {
-    console.warn('[match-schemes] Translation failed, returning English:', e);
+    console.warn('[match-schemes] Translation batch warning:', e);
   }
 
   return map;
@@ -64,6 +75,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     lang = body.lang || 'en-IN';
     const profile = body.profile;
+    const promptText = body.promptText || '';
 
     if (!profile) {
       return NextResponse.json({ error: 'Profile is required' }, { status: 400 });
@@ -81,25 +93,40 @@ export async function POST(req: Request) {
           finalReason = `You qualify because this scheme ${eligibilityResult.reasons.join(' and ')}.`;
         }
 
+        const score = calculateRelevanceScore(scheme, profile, promptText);
+
         matches.push({
           ...scheme,
           matchDetails: {
             eligibility: 'Eligible',
             reason: finalReason,
+            relevanceScore: score,
           },
         });
       }
     }
 
-    // ── Translate ALL user-visible text fields if language is not English ──
+    // Sort matches descending by relevance score so the most relevant schemes appear first!
+    matches.sort((a, b) => b.matchDetails.relevanceScore - a.matchDetails.relevanceScore);
+
+    // ── Fast parallel translation of top matched schemes ──
     if (lang !== 'en-IN' && matches.length > 0) {
-      // Collect every unique translatable string from all matched schemes
+      for (const m of matches) {
+        m.name_en = m.name;
+      }
+
+      // Prioritize top 50 matches (pages 1-10) for instant response
+      const topMatches = matches.slice(0, 50);
       const toTranslate: string[] = [];
 
-      for (const m of matches) {
+      for (const m of topMatches) {
+        if (m.name) toTranslate.push(m.name);
+        if (m.category) toTranslate.push(m.category);
+        if (m.central_or_state) toTranslate.push(m.central_or_state);
         if (m.description) toTranslate.push(m.description);
         if (m.benefits) toTranslate.push(m.benefits);
         if (m.matchDetails.reason) toTranslate.push(m.matchDetails.reason);
+        if (m.matchDetails.eligibility) toTranslate.push(m.matchDetails.eligibility);
         if (m.offline_process) toTranslate.push(m.offline_process);
         if (m.nearest_office) toTranslate.push(m.nearest_office);
         if (Array.isArray(m.required_documents)) {
@@ -112,9 +139,13 @@ export async function POST(req: Request) {
       // Apply translations back to each match
       if (Object.keys(tMap).length > 0) {
         for (const m of matches) {
+          if (tMap[m.name]) m.name = tMap[m.name];
+          if (tMap[m.category]) m.category = tMap[m.category];
+          if (tMap[m.central_or_state]) m.central_or_state = tMap[m.central_or_state];
           if (tMap[m.description]) m.description = tMap[m.description];
           if (tMap[m.benefits]) m.benefits = tMap[m.benefits];
           if (tMap[m.matchDetails.reason]) m.matchDetails.reason = tMap[m.matchDetails.reason];
+          if (tMap[m.matchDetails.eligibility]) m.matchDetails.eligibility = tMap[m.matchDetails.eligibility];
           if (m.offline_process && tMap[m.offline_process]) m.offline_process = tMap[m.offline_process];
           if (m.nearest_office && tMap[m.nearest_office]) m.nearest_office = tMap[m.nearest_office];
           if (Array.isArray(m.required_documents)) {

@@ -15,6 +15,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "JanSahayak AI",
   description: "Your AI Guide to Government Benefits in Every Indian Language",
+  other: {
+    google: "notranslate",
+  },
 };
 
 export default function RootLayout({
